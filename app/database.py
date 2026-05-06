@@ -1,30 +1,36 @@
 # --- Forum database functions ---
+from app.models import ForumIn, ForumOut
+
+
+
 import mariadb
 
-from app.auth.auth import get_hash_password
+import mariadb
 from app.models import (
     AchievementIn,
     AchievementOut,
-    BuildDb,
     BuildIn,
-    ChatDb,
+    BuildOut,
     ChatIn,
-    DiscussionDb,
+    ChatOut,
     DiscussionIn,
+    DiscussionOut,
     ForumIn,
     ForumOut,
     GameDb,
     GameIn,
     GroupIn,
     GroupOut,
-    MessageInstanceDb,
     MessageInstanceIn,
+    MessageInstanceOut,
     TierListIn,
     TierListOut,
     UserDb,
     WikiIn,
     WikiOut,
 )
+from app.auth.auth import get_hash_password
+from app.models import GameDb, GameIn, UserDb
 
 db_config = {
     "host": "myapidb",
@@ -398,372 +404,6 @@ def delete_wiki_by_id(wiki_id: int) -> bool:
             return cursor.rowcount > 0
 
 
-# --- Messages instance database functions ---
-
-
-def insert_message_instance(message_in: MessageInstanceIn) -> int | None:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = (
-                "INSERT INTO messages_instance (status, content, timestamp) "
-                "VALUES (?, ?, NOW())"
-            )
-            values = (message_in.status, message_in.content)
-            cursor.execute(sql, values)
-            conn.commit()
-            return cursor.lastrowid
-
-
-def get_message_instance_by_id(message_id: int) -> MessageInstanceDb | None:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = (
-                "SELECT id_mi, status, content, timestamp "
-                "FROM messages_instance WHERE id_mi = ?"
-            )
-            cursor.execute(sql, (message_id,))
-            row = cursor.fetchone()
-            if row:
-                return MessageInstanceDb(
-                    id_mi=row[0],
-                    status=row[1],
-                    content=row[2],
-                    timestamp=row[3],
-                )
-            return None
-
-
-def get_all_messages_instance() -> list[MessageInstanceDb]:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = "SELECT id_mi, status, content, timestamp FROM messages_instance"
-            cursor.execute(sql)
-            rows = cursor.fetchall()
-            return [
-                MessageInstanceDb(
-                    id_mi=row[0],
-                    status=row[1],
-                    content=row[2],
-                    timestamp=row[3],
-                )
-                for row in rows
-            ]
-
-
-def delete_message_instance(message_id: int) -> bool:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = "DELETE FROM messages_instance WHERE id_mi = ?"
-            cursor.execute(sql, (message_id,))
-            conn.commit()
-            return cursor.rowcount > 0
-
-
-# --- Chat database functions ---
-
-
-def insert_chat(chat_in: ChatIn) -> int | None:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = "INSERT INTO chat (id_mi, content, timestamp) VALUES (?, ?, NOW())"
-            values = (chat_in.id_mi, chat_in.content)
-            cursor.execute(sql, values)
-            conn.commit()
-            return cursor.lastrowid
-
-
-def get_chat_by_id(chat_id: int) -> ChatDb | None:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = "SELECT id_chat, id_mi, content, timestamp FROM chat WHERE id_chat = ?"
-            cursor.execute(sql, (chat_id,))
-            row = cursor.fetchone()
-            if row:
-                return ChatDb(
-                    id_chat=row[0],
-                    id_mi=row[1],
-                    content=row[2],
-                    timestamp=row[3],
-                )
-            return None
-
-
-def get_chats_by_message_instance(message_id: int) -> list[ChatDb]:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = "SELECT id_chat, id_mi, content, timestamp FROM chat WHERE id_mi = ?"
-            cursor.execute(sql, (message_id,))
-            rows = cursor.fetchall()
-            return [
-                ChatDb(
-                    id_chat=row[0],
-                    id_mi=row[1],
-                    content=row[2],
-                    timestamp=row[3],
-                )
-                for row in rows
-            ]
-
-
-def get_all_chats() -> list[ChatDb]:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = "SELECT id_chat, id_mi, content, timestamp FROM chat"
-            cursor.execute(sql)
-            rows = cursor.fetchall()
-            return [
-                ChatDb(
-                    id_chat=row[0],
-                    id_mi=row[1],
-                    content=row[2],
-                    timestamp=row[3],
-                )
-                for row in rows
-            ]
-
-
-def delete_chat(chat_id: int) -> bool:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = "DELETE FROM chat WHERE id_chat = ?"
-            cursor.execute(sql, (chat_id,))
-            conn.commit()
-            return cursor.rowcount > 0
-
-
-# --- Build database functions ---
-
-
-def insert_build(build_in: BuildIn) -> int | None:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = (
-                "INSERT INTO builds (name, planner, category, description, id_forum) "
-                "VALUES (?, ?, ?, ?, ?)"
-            )
-            values = (
-                build_in.name,
-                build_in.planner,
-                build_in.category,
-                build_in.description,
-                build_in.id_forum,
-            )
-            cursor.execute(sql, values)
-            conn.commit()
-            return cursor.lastrowid
-
-
-def get_build_by_id(build_id: int) -> BuildDb | None:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = (
-                "SELECT id_build, name, planner, category, description, id_forum "
-                "FROM builds WHERE id_build = ?"
-            )
-            cursor.execute(sql, (build_id,))
-            row = cursor.fetchone()
-            if row:
-                return BuildDb(
-                    id_build=row[0],
-                    name=row[1],
-                    planner=row[2],
-                    category=row[3],
-                    description=row[4],
-                    id_forum=row[5],
-                )
-            return None
-
-
-def get_all_builds() -> list[BuildDb]:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = "SELECT id_build, name, planner, category, description, id_forum FROM builds"
-            cursor.execute(sql)
-            rows = cursor.fetchall()
-            return [
-                BuildDb(
-                    id_build=row[0],
-                    name=row[1],
-                    planner=row[2],
-                    category=row[3],
-                    description=row[4],
-                    id_forum=row[5],
-                )
-                for row in rows
-            ]
-
-
-def get_builds_by_forum(forum_id: int) -> list[BuildDb]:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = (
-                "SELECT id_build, name, planner, category, description, id_forum "
-                "FROM builds WHERE id_forum = ?"
-            )
-            cursor.execute(sql, (forum_id,))
-            rows = cursor.fetchall()
-            return [
-                BuildDb(
-                    id_build=row[0],
-                    name=row[1],
-                    planner=row[2],
-                    category=row[3],
-                    description=row[4],
-                    id_forum=row[5],
-                )
-                for row in rows
-            ]
-
-
-def update_build(build_id: int, build_in: BuildIn) -> bool:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = (
-                "UPDATE builds SET name = ?, planner = ?, category = ?, description = ?, id_forum = ? "
-                "WHERE id_build = ?"
-            )
-            values = (
-                build_in.name,
-                build_in.planner,
-                build_in.category,
-                build_in.description,
-                build_in.id_forum,
-                build_id,
-            )
-            cursor.execute(sql, values)
-            conn.commit()
-            return cursor.rowcount > 0
-
-
-def delete_build(build_id: int) -> bool:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = "DELETE FROM builds WHERE id_build = ?"
-            cursor.execute(sql, (build_id,))
-            conn.commit()
-            return cursor.rowcount > 0
-
-
-# --- Discussion database functions ---
-
-
-def insert_discussion(discussion_in: DiscussionIn, user_id: int) -> int | None:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = (
-                "INSERT INTO discussion (name, comments, posts, rating, id_forum, id_user) "
-                "VALUES (?, ?, ?, ?, ?, ?)"
-            )
-            values = (
-                discussion_in.name,
-                discussion_in.comments,
-                discussion_in.posts,
-                discussion_in.rating,
-                discussion_in.id_forum,
-                user_id,
-            )
-            cursor.execute(sql, values)
-            conn.commit()
-            return cursor.lastrowid
-
-
-def get_discussion_by_id(discussion_id: int) -> DiscussionDb | None:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = (
-                "SELECT id_discussion, name, comments, posts, rating, id_forum, id_user "
-                "FROM discussion WHERE id_discussion = ?"
-            )
-            cursor.execute(sql, (discussion_id,))
-            row = cursor.fetchone()
-            if row:
-                return DiscussionDb(
-                    id_discussion=row[0],
-                    name=row[1],
-                    comments=row[2],
-                    posts=row[3],
-                    rating=row[4],
-                    id_forum=row[5],
-                    id_user=row[6],
-                )
-            return None
-
-
-def get_all_discussions() -> list[DiscussionDb]:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = (
-                "SELECT id_discussion, name, comments, posts, rating, id_forum, id_user "
-                "FROM discussion"
-            )
-            cursor.execute(sql)
-            rows = cursor.fetchall()
-            return [
-                DiscussionDb(
-                    id_discussion=row[0],
-                    name=row[1],
-                    comments=row[2],
-                    posts=row[3],
-                    rating=row[4],
-                    id_forum=row[5],
-                    id_user=row[6],
-                )
-                for row in rows
-            ]
-
-
-def get_discussions_by_forum(forum_id: int) -> list[DiscussionDb]:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = (
-                "SELECT id_discussion, name, comments, posts, rating, id_forum, id_user "
-                "FROM discussion WHERE id_forum = ?"
-            )
-            cursor.execute(sql, (forum_id,))
-            rows = cursor.fetchall()
-            return [
-                DiscussionDb(
-                    id_discussion=row[0],
-                    name=row[1],
-                    comments=row[2],
-                    posts=row[3],
-                    rating=row[4],
-                    id_forum=row[5],
-                    id_user=row[6],
-                )
-                for row in rows
-            ]
-
-
-def update_discussion(discussion_id: int, discussion_in: DiscussionIn) -> bool:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = (
-                "UPDATE discussion SET name = ?, comments = ?, posts = ?, rating = ?, id_forum = ? "
-                "WHERE id_discussion = ?"
-            )
-            values = (
-                discussion_in.name,
-                discussion_in.comments,
-                discussion_in.posts,
-                discussion_in.rating,
-                discussion_in.id_forum,
-                discussion_id,
-            )
-            cursor.execute(sql, values)
-            conn.commit()
-            return cursor.rowcount > 0
-
-
-def delete_discussion(discussion_id: int) -> bool:
-    with mariadb.connect(**db_config) as conn:
-        with conn.cursor() as cursor:
-            sql = "DELETE FROM discussion WHERE id_discussion = ?"
-            cursor.execute(sql, (discussion_id,))
-            conn.commit()
-            return cursor.rowcount > 0
-
-
 # --- Tier list database functions ---
 
 
@@ -966,7 +606,7 @@ def insert_group(group_in: GroupIn, admin_id: int) -> int:
                 admin_id,
                 group_in.description,
                 group_in.image,
-                group_in.id_forum,
+                group_in.id_forum,      
             )
             cursor.execute(sql, values)
             conn.commit()
@@ -1061,3 +701,456 @@ def delete_group_by_id(group_id: int) -> bool:
             cursor.execute(sql, (group_id,))
             conn.commit()
             return cursor.rowcount > 0
+
+
+# --- Builds database functions ---
+
+
+def insert_build(build_in: BuildIn) -> int:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "INSERT INTO builds (name, planner, category, description, id_forum) VALUES (?, ?, ?, ?, ?)"
+            values = (
+                build_in.name,
+                build_in.planner,
+                build_in.category,
+                build_in.description,
+                build_in.id_forum,
+            )
+            cursor.execute(sql, values)
+            conn.commit()
+            return cursor.lastrowid
+
+
+def get_build_by_id(build_id: int) -> BuildOut | None:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "SELECT id_build, name, planner, category, description, id_forum FROM builds WHERE id_build = ?"
+            cursor.execute(sql, (build_id,))
+            row = cursor.fetchone()
+            if row:
+                return BuildOut(
+                    id_build=row[0],
+                    name=row[1],
+                    planner=row[2],
+                    category=row[3],
+                    description=row[4],
+                    id_forum=row[5],
+                )
+            return None
+
+
+def get_all_builds() -> list[BuildOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "SELECT id_build, name, planner, category, description, id_forum FROM builds"
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            return [
+                BuildOut(
+                    id_build=row[0],
+                    name=row[1],
+                    planner=row[2],
+                    category=row[3],
+                    description=row[4],
+                    id_forum=row[5],
+                )
+                for row in rows
+            ]
+
+
+def get_builds_by_forum(forum_id: int) -> list[BuildOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "SELECT id_build, name, planner, category, description, id_forum FROM builds WHERE id_forum = ?"
+            cursor.execute(sql, (forum_id,))
+            rows = cursor.fetchall()
+            return [
+                BuildOut(
+                    id_build=row[0],
+                    name=row[1],
+                    planner=row[2],
+                    category=row[3],
+                    description=row[4],
+                    id_forum=row[5],
+                )
+                for row in rows
+            ]
+
+
+def update_build(build_id: int, build_in: BuildIn) -> bool:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "UPDATE builds SET name=?, planner=?, category=?, description=?, id_forum=? WHERE id_build=?"
+            values = (
+                build_in.name,
+                build_in.planner,
+                build_in.category,
+                build_in.description,
+                build_in.id_forum,
+                build_id,
+            )
+            cursor.execute(sql, values)
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+def delete_build(build_id: int) -> bool:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "DELETE FROM builds WHERE id_build = ?"
+            cursor.execute(sql, (build_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+# --- Messages Instance database functions ---
+
+
+def insert_message_instance(message_in: MessageInstanceIn) -> int:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "INSERT INTO messages_instance (status, content) VALUES (?, ?)"
+            values = (message_in.status, message_in.content)
+            cursor.execute(sql, values)
+            conn.commit()
+            return cursor.lastrowid
+
+
+def get_message_instance_by_id(mi_id: int) -> MessageInstanceOut | None:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "SELECT id_mi, status, content, timestamp FROM messages_instance WHERE id_mi = ?"
+            cursor.execute(sql, (mi_id,))
+            row = cursor.fetchone()
+            if row:
+                return MessageInstanceOut(
+                    id_mi=row[0],
+                    status=row[1],
+                    content=row[2],
+                    timestamp=str(row[3]) if row[3] else None,
+                )
+            return None
+
+
+def get_all_messages_instance() -> list[MessageInstanceOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "SELECT id_mi, status, content, timestamp FROM messages_instance"
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            return [
+                MessageInstanceOut(
+                    id_mi=row[0],
+                    status=row[1],
+                    content=row[2],
+                    timestamp=str(row[3]) if row[3] else None,
+                )
+                for row in rows
+            ]
+
+
+def delete_message_instance(mi_id: int) -> bool:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "DELETE FROM messages_instance WHERE id_mi = ?"
+            cursor.execute(sql, (mi_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+# --- Chat database functions ---
+
+
+def insert_chat(chat_in: ChatIn) -> int:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "INSERT INTO chat (id_mi, content) VALUES (?, ?)"
+            values = (chat_in.id_mi, chat_in.content)
+            cursor.execute(sql, values)
+            conn.commit()
+            return cursor.lastrowid
+
+
+def get_chat_by_id(chat_id: int) -> ChatOut | None:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "SELECT id_chat, id_mi, content, timestamp FROM chat WHERE id_chat = ?"
+            cursor.execute(sql, (chat_id,))
+            row = cursor.fetchone()
+            if row:
+                return ChatOut(
+                    id_chat=row[0],
+                    id_mi=row[1],
+                    content=row[2],
+                    timestamp=str(row[3]) if row[3] else None,
+                )
+            return None
+
+
+def get_all_chats() -> list[ChatOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "SELECT id_chat, id_mi, content, timestamp FROM chat"
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            return [
+                ChatOut(
+                    id_chat=row[0],
+                    id_mi=row[1],
+                    content=row[2],
+                    timestamp=str(row[3]) if row[3] else None,
+                )
+                for row in rows
+            ]
+
+
+def get_chats_by_message_instance(mi_id: int) -> list[ChatOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "SELECT id_chat, id_mi, content, timestamp FROM chat WHERE id_mi = ?"
+            cursor.execute(sql, (mi_id,))
+            rows = cursor.fetchall()
+            return [
+                ChatOut(
+                    id_chat=row[0],
+                    id_mi=row[1],
+                    content=row[2],
+                    timestamp=str(row[3]) if row[3] else None,
+                )
+                for row in rows
+            ]
+
+
+def delete_chat(chat_id: int) -> bool:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "DELETE FROM chat WHERE id_chat = ?"
+            cursor.execute(sql, (chat_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+# --- Discussion database functions ---
+
+
+def insert_discussion(discussion_in: DiscussionIn, id_user: int) -> int:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = (
+                "INSERT INTO discussion (name, comments, posts, rating, id_forum, id_user) "
+                "VALUES (?, ?, ?, ?, ?, ?)"
+            )
+            values = (
+                discussion_in.name,
+                discussion_in.comments,
+                discussion_in.posts,
+                discussion_in.rating,
+                discussion_in.id_forum,
+                id_user,
+            )
+            cursor.execute(sql, values)
+            conn.commit()
+            return cursor.lastrowid
+
+
+def get_discussion_by_id(discussion_id: int) -> DiscussionOut | None:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = (
+                "SELECT id_discussion, name, comments, posts, rating, id_forum, id_user "
+                "FROM discussion WHERE id_discussion = ?"
+            )
+            cursor.execute(sql, (discussion_id,))
+            row = cursor.fetchone()
+            if row:
+                return DiscussionOut(
+                    id_discussion=row[0],
+                    name=row[1],
+                    comments=row[2],
+                    posts=row[3],
+                    rating=row[4],
+                    id_forum=row[5],
+                    id_user=row[6],
+                )
+            return None
+
+
+def get_all_discussions() -> list[DiscussionOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = (
+                "SELECT id_discussion, name, comments, posts, rating, id_forum, id_user "
+                "FROM discussion"
+            )
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            return [
+                DiscussionOut(
+                    id_discussion=row[0],
+                    name=row[1],
+                    comments=row[2],
+                    posts=row[3],
+                    rating=row[4],
+                    id_forum=row[5],
+                    id_user=row[6],
+                )
+                for row in rows
+            ]
+
+
+def get_discussions_by_forum(forum_id: int) -> list[DiscussionOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = (
+                "SELECT id_discussion, name, comments, posts, rating, id_forum, id_user "
+                "FROM discussion WHERE id_forum = ?"
+            )
+            cursor.execute(sql, (forum_id,))
+            rows = cursor.fetchall()
+            return [
+                DiscussionOut(
+                    id_discussion=row[0],
+                    name=row[1],
+                    comments=row[2],
+                    posts=row[3],
+                    rating=row[4],
+                    id_forum=row[5],
+                    id_user=row[6],
+                )
+                for row in rows
+            ]
+
+
+def update_discussion(discussion_id: int, discussion_in: DiscussionIn) -> bool:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = (
+                "UPDATE discussion SET name=?, comments=?, posts=?, rating=?, id_forum=? "
+                "WHERE id_discussion=?"
+            )
+            values = (
+                discussion_in.name,
+                discussion_in.comments,
+                discussion_in.posts,
+                discussion_in.rating,
+                discussion_in.id_forum,
+                discussion_id,
+            )
+            cursor.execute(sql, values)
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+def delete_discussion(discussion_id: int) -> bool:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "DELETE FROM discussion WHERE id_discussion = ?"
+            cursor.execute(sql, (discussion_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+# --- User update ---
+
+
+def update_user_by_username(username: str, fields: dict) -> bool:
+    if not fields:
+        return False
+    set_clause = ", ".join(f"{k} = ?" for k in fields)
+    values = list(fields.values()) + [username]
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = f"UPDATE users SET {set_clause} WHERE username = ?"
+            cursor.execute(sql, values)
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+# --- Group membership (user_group) ---
+
+
+def add_user_to_group(user_id: int, group_id: int) -> bool:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "INSERT IGNORE INTO user_group (id_user, id_group) VALUES (?, ?)"
+            cursor.execute(sql, (user_id, group_id))
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+def remove_user_from_group(user_id: int, group_id: int) -> bool:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "DELETE FROM user_group WHERE id_user = ? AND id_group = ?"
+            cursor.execute(sql, (user_id, group_id))
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+def get_group_members(group_id: int) -> list[UserDb]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = (
+                "SELECT u.id, u.name, u.username, u.email, u.password, u.image, u.role "
+                "FROM users u "
+                "JOIN user_group ug ON u.id = ug.id_user "
+                "WHERE ug.id_group = ?"
+            )
+            cursor.execute(sql, (group_id,))
+            rows = cursor.fetchall()
+            return [
+                UserDb(
+                    id=row[0],
+                    name=row[1],
+                    username=row[2],
+                    email=row[3],
+                    password=row[4],
+                    image=row[5],
+                    role=row[6],
+                )
+                for row in rows
+            ]
+
+
+# --- User achievements (user_achievement) ---
+
+
+def add_user_achievement(user_id: int, achievement_id: int) -> bool:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "INSERT IGNORE INTO user_achievement (id_user, id_achievement) VALUES (?, ?)"
+            cursor.execute(sql, (user_id, achievement_id))
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+def remove_user_achievement(user_id: int, achievement_id: int) -> bool:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "DELETE FROM user_achievement WHERE id_user = ? AND id_achievement = ?"
+            cursor.execute(sql, (user_id, achievement_id))
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+def get_user_achievements(user_id: int) -> list[AchievementOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = (
+                "SELECT a.id_achievement, a.difficulty, a.description, a.id_game "
+                "FROM achievement a "
+                "JOIN user_achievement ua ON a.id_achievement = ua.id_achievement "
+                "WHERE ua.id_user = ?"
+            )
+            cursor.execute(sql, (user_id,))
+            rows = cursor.fetchall()
+            return [
+                AchievementOut(
+                    id_achievement=row[0],
+                    difficulty=row[1],
+                    description=row[2],
+                    id_game=row[3],
+                )
+                for row in rows
+            ]

@@ -12,12 +12,12 @@ bcrypt.hashpw(password="pm".encode("utf-8"), salt=bcrypt.gensalt())
 openssl rand -hex 32
 
 '''
-from app.models import UserIn, UserOut, UserDb, UserBase, TokenOut
+from app.models import UserIn, UserOut, UserDb, UserBase, TokenOut, UserUpdate
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from fastapi import APIRouter, status, HTTPException, Header, Depends
 from dataclasses import dataclass
 from fastapi import APIRouter, status, HTTPException
-from app.database import insert_user, get_user_by_username, get_all_users, delete_user_by_username, insert_game
+from app.database import insert_user, get_user_by_username, get_all_users, delete_user_by_username, insert_game, update_user_by_username
 
 from app.auth.auth import create_access_token, Token, verify_password, decode_token, oauth2_scheme, TokenData, get_hash_password
 
@@ -158,11 +158,50 @@ async def read_user(username: str, token: str = Depends(oauth2_scheme)):
     return UserOut(id=user_found.id, name=user_found.name, username=user_found.username, email=user_found.email, image=user_found.image, role=user_found.role)
 
 
+# Actualizar perfil del usuario autenticado
+@router.put("/me/", response_model=UserOut, status_code=status.HTTP_200_OK)
+async def update_me(user_update: UserUpdate, token: str = Depends(oauth2_scheme)):
+    data: TokenData = decode_token(token)
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    fields: dict = {}
+    if user_update.name is not None:
+        fields["name"] = user_update.name
+    if user_update.email is not None:
+        fields["email"] = user_update.email
+    if user_update.image is not None:
+        fields["image"] = user_update.image
+    if user_update.password is not None:
+        fields["password"] = get_hash_password(user_update.password)
+
+    if fields:
+        updated = update_user_by_username(data.username, fields)
+        if not updated:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User could not be updated")
+
+    updated_user = get_user_by_username(data.username)
+    return UserOut(
+        id=updated_user.id,
+        name=updated_user.name,
+        username=updated_user.username,
+        email=updated_user.email,
+        image=updated_user.image,
+        role=updated_user.role,
+    )
+
+
 # Borrar usuario
 @router.delete("/{username}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(username: str, token: str = Depends(oauth2_scheme)):
-    # Verificamos que quien pide borrar esté autenticado
-    decode_token(token)
+    data: TokenData = decode_token(token)
+    requester = get_user_by_username(data.username)
+    if not requester:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+    if requester.role != "admin" and requester.username != username:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
 
     user_found = get_user_by_username(username)
     
