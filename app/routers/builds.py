@@ -3,7 +3,7 @@ from app.models import BuildIn, BuildOut
 from app.database import (
     insert_build,
     get_build_by_id,
-    get_all_builds,
+    get_all_builds as fetch_all_builds,
     get_builds_by_forum,
     update_build,
     delete_build,
@@ -27,7 +27,7 @@ async def create_build(build_in: BuildIn, token: str = Depends(oauth2_scheme)):
 @router.get("/", response_model=list[BuildOut])
 async def get_all_builds(token: str = Depends(oauth2_scheme)):
     data: TokenData = decode_token(token)
-    builds = get_all_builds()
+    builds = fetch_all_builds()
     return [BuildOut(id_build=b.id_build, name=b.name, planner=b.planner, category=b.category, description=b.description, id_forum=b.id_forum) for b in builds]
 
 # Obtener build por id
