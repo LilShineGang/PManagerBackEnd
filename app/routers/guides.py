@@ -1,20 +1,19 @@
 # post (para crear una guia), un get de game para el id del foro, un get de guia y un delete de guia.
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from fastapi import APIRouter, status, Depends, HTTPException
-from app.models import GuideIn, GuideOut
+from app.auth.auth import TokenData, decode_token, oauth2_scheme
 from app.database import (
-    insert_guide,
-    get_guide_by_id,
-    get_guides_by_forum as db_get_guides_by_forum,
     delete_guide_by_id,
+    get_guide_by_id,
     get_user_by_username,
+    insert_guide,
 )
-from app.auth.auth import oauth2_scheme, decode_token, TokenData
+from app.database import (
+    get_guides_by_forum as db_get_guides_by_forum,
+)
+from app.models import GuideIn, GuideOut
 
-router = APIRouter(
-    prefix="/guides",
-    tags=["Guides"]
-)
+router = APIRouter(prefix="/guides", tags=["Guides"])
 
 
 # Creamos una nueva guia
@@ -29,7 +28,7 @@ async def create_guide(guide_in: GuideIn, token: str = Depends(oauth2_scheme)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Forum not found"
         )
-    guide_id = insert_guide(guide_in, user.id, forum.id_forum)
+    guide_id = insert_guide(guide_in, user.id, guide_in.forum_id)
     return GuideOut(
         id_guide=guide_id,
         name=guide_in.name,

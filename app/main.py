@@ -1,7 +1,19 @@
 from fastapi import FastAPI
 
-from app.routers import users, games, forums, guides, messages_instance, chats, builds, discussion, wiki, groups, tier_list, achievements
-
+from app.routers import (
+    achievements,
+    builds,
+    chats,
+    discussion,
+    forums,
+    games,
+    groups,
+    guides,
+    messages_instance,
+    tier_list,
+    users,
+    wiki,
+)
 
 app = FastAPI(debug=True)
 
@@ -17,7 +29,6 @@ app.include_router(messages_instance.router)
 app.include_router(chats.router)
 app.include_router(builds.router)
 app.include_router(discussion.router)
-
 
 @app.get("/")
 async def root():
