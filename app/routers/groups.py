@@ -2,16 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.auth.auth import TokenData, decode_token, oauth2_scheme
 from app.database import (
+    add_user_to_group,
     delete_group_by_id,
     get_all_groups,
     get_forum_by_id,
     get_group_by_id,
+    get_group_members,
     get_groups_by_forum,
     get_user_by_username,
     insert_group,
+    remove_user_from_group,
     update_group_by_id,
 )
-from app.models import GroupIn, GroupOut
+from app.models import GroupIn, GroupOut, UserOut
 
 router = APIRouter(prefix="/groups", tags=["Groups"])
 
@@ -117,3 +120,51 @@ async def delete_group(group_id: int, token: str = Depends(oauth2_scheme)):
             detail="Failed to delete group",
         )
     return None
+
+
+@router.post("/{group_id}/members/", status_code=status.HTTP_204_NO_CONTENT)
+async def join_group(group_id: int, token: str = Depends(oauth2_scheme)):
+    data: TokenData = decode_token(token)
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+    group = get_group_by_id(group_id)
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+    added = add_user_to_group(user.id, group_id)
+    if not added:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Already a member")
+    return None
+
+
+@router.delete("/{group_id}/members/", status_code=status.HTTP_204_NO_CONTENT)
+async def leave_group(group_id: int, token: str = Depends(oauth2_scheme)):
+    data: TokenData = decode_token(token)
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+    group = get_group_by_id(group_id)
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+    removed = remove_user_from_group(user.id, group_id)
+    if not removed:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not a member")
+    return None
+
+
+@router.get("/{group_id}/members/", response_model=list[UserOut], status_code=status.HTTP_200_OK)
+async def read_group_members(group_id: int, token: str = Depends(oauth2_scheme)):
+    decode_token(token)
+    group = get_group_by_id(group_id)
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+    members = get_group_members(group_id)
+    return [
+        UserOut(id=m.id, name=m.name, username=m.username, email=m.email, image=m.image, role=m.role)
+        for m in members
+    ]
