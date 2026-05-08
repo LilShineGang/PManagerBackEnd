@@ -9,7 +9,7 @@ class UserRepository(BaseRepository[User]):
         pass
 
     @abstractmethod
-    def get_by_group(self, user_id: int, group_id: int) -> bool:
+    def is_member_of_group(self, user_id: int, group_id: int) -> bool:
         pass
 
     @abstractmethod

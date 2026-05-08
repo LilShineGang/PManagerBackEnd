@@ -22,7 +22,7 @@ class UserResponse(BaseModel):
         return cls(
             id=user.id,
             username=user.username,
-            email=user.email,
+            email=str(user.email),
             name=user.name,
             role=user.role,
             image=user.image
