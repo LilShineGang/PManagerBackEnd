@@ -1,6 +1,8 @@
 from app.domain.entities.user import User
 from app.domain.repositories.user_repository import UserRepository
-from app.application.exceptions.user_exceptions import UserAlreadyExistsException, InvalidEmailError
+from app.application.exceptions.user_exceptions import (
+    UserAlreadyExistsError, InvalidEmailError
+)
 from app.shared.security.password_hasher import PasswordHasher
 from typing import Optional, List
 
@@ -9,7 +11,13 @@ class UserService:
         self.user_repository = user_repository
         self.password_hasher = password_hasher
 
-    async def create_user(self, username: str, email: str, password: str, role: str = "user") -> User:
+    async def create_user(
+            self, 
+            username: str, 
+            email: str, 
+            password: str, 
+            role: str = "user"
+            ) -> User:
         # Check if user already exists
         existing_user = self.user_repository.get_by_username(username)
         if existing_user:

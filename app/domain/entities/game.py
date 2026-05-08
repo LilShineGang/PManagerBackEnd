@@ -6,7 +6,7 @@ from app.domain.entities.game_rating import GameRating
 class Game:
     id: Optional[int] = None
     name: str = ""
-    gender: str = ""
+    gendre: str = ""
     difficulty: str = ""
     rating: Optional[GameRating] = None
     image: Optional[str] = None
