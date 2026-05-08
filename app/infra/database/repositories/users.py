@@ -2,8 +2,139 @@ import mariadb
 from app.database.config import db_config
 from app.models import UserDb, AchievementOut
 from app.auth.auth import get_hash_password
+from app.domain.repositories.user_repository import UserRepository
+from app.domain.entities.user import User
+from app.domain.value_objects.email import Email
+from app.domain.value_objects.password import Password
+from typing import Optional, List
 
 
+class MariaDBUserRepository(UserRepository):
+    def __init__(self):
+        self.db_config = db_config
+    
+    def _get_connection(self):
+        return mariadb.connect(**self.db_config)
+    
+    def save(self, entity: User) -> User:
+        with self._get_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = "INSERT INTO users (name, username, email, password, image, role) VALUES (?, ?, ?, ?, ?, ?)"
+                values = (
+                    entity.name,
+                    entity.username,
+                    entity.email.value,
+                    entity.password.value,
+                    entity.image,
+                    entity.role,
+                )
+                cursor.execute(sql, values)
+                conn.commit()
+                entity.id = cursor.lastrowid
+                return entity
+    
+    def get_by_id(self, entity_id: int) -> Optional[User]:
+        with self._get_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = "SELECT id, name, username, email, password, image, role FROM users WHERE id = ?"
+                cursor.execute(sql, (entity_id,))
+                row = cursor.fetchone()
+                if row:
+                    return User(
+                        id=row[0],
+                        name=row[1],
+                        username=row[2],
+                        email=Email(row[3]),
+                        password=Password(row[4]),
+                        image=row[5],
+                        role=row[6],
+                    )
+                return None
+    
+    def get_by_username(self, username: str) -> Optional[User]:
+        with self._get_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = "SELECT id, name, username, email, password, image, role FROM users WHERE username = ?"
+                cursor.execute(sql, (username,))
+                row = cursor.fetchone()
+                if row:
+                    return User(
+                        id=row[0],
+                        name=row[1],
+                        username=row[2],
+                        email=Email(row[3]),
+                        password=Password(row[4]),
+                        image=row[5],
+                        role=row[6],
+                    )
+                return None
+    
+    def get_all(self) -> List[User]:
+        with self._get_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = "SELECT id, name, username, email, password, image, role FROM users"
+                cursor.execute(sql)
+                rows = cursor.fetchall()
+                return [
+                    User(
+                        id=row[0],
+                        name=row[1],
+                        username=row[2],
+                        email=Email(row[3]),
+                        password=Password(row[4]),
+                        image=row[5],
+                        role=row[6],
+                    )
+                    for row in rows
+                ]
+    
+    def delete(self, entity_id: int) -> bool:
+        with self._get_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = "DELETE FROM users WHERE id = ?"
+                cursor.execute(sql, (entity_id,))
+                conn.commit()
+                return cursor.rowcount > 0
+    
+    def update(self, entity: User) -> User:
+        with self._get_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = """
+                UPDATE users 
+                SET name = ?, username = ?, email = ?, password = ?, image = ?, role = ?
+                WHERE id = ?
+                """
+                values = (
+                    entity.name,
+                    entity.username,
+                    entity.email.value,
+                    entity.password.value,
+                    entity.image,
+                    entity.role,
+                    entity.id
+                )
+                cursor.execute(sql, values)
+                conn.commit()
+                return entity
+    
+    def get_by_group(self, user_id: int, group_id: int) -> bool:
+        with self._get_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = "SELECT COUNT(*) FROM user_group WHERE id_user = ? AND id_group = ?"
+                cursor.execute(sql, (user_id, group_id))
+                result = cursor.fetchone()
+                return result[0] > 0 if result else False
+    
+    def remove_from_group(self, user_id: int, group_id: int) -> bool:
+        with self._get_connection() as conn:
+            with conn.cursor() as cursor:
+                sql = "DELETE FROM user_group WHERE id_user = ? AND id_group = ?"
+                cursor.execute(sql, (user_id, group_id))
+                conn.commit()
+                return cursor.rowcount > 0
+
+
+# Mantener las funciones existentes para compatibilidad con el código antiguo
 users: list[UserDb] = [
     UserDb(
         id=1,
