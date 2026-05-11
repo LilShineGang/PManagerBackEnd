@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, List
 from app.domain.value_objects.email import Email
-from app.domain.value_objects.username import Username
 from app.domain.value_objects.password import Password
 
 @dataclass
