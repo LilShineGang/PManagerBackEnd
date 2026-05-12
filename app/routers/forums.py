@@ -1,7 +1,16 @@
 from fastapi import APIRouter, status, Depends, HTTPException
+
+from app.auth import oauth2_scheme, decode_token, TokenData
+from app.database import (
+    insert_forum,
+    get_forum_by_id,
+    get_forums_by_game,
+    get_all_forums,
+    delete_forum_by_id,
+    get_user_by_username,
+    get_game_by_name,
+)
 from app.models import ForumIn, ForumOut
-from app.database import insert_forum, get_forum_by_id, get_forums_by_game, get_all_forums, delete_forum_by_id, get_user_by_username, get_game_by_name
-from app.auth.auth import oauth2_scheme, decode_token, TokenData
 
 router = APIRouter(
     prefix="/forums",
