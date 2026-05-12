@@ -96,6 +96,18 @@ def update_game_by_id(game_id: int, game_in: GameIn) -> bool:
             return cursor.rowcount > 0
 
 
+def update_game_fields_by_id(game_id: int, fields: dict) -> bool:
+    if not fields:
+        return False
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            set_clause = ", ".join(f"{k}=?" for k in fields)
+            values = list(fields.values()) + [game_id]
+            cursor.execute(f"UPDATE games SET {set_clause} WHERE id_game=?", values)
+            conn.commit()
+            return cursor.rowcount > 0
+
+
 def delete_game_by_id(game_id: int) -> bool:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:

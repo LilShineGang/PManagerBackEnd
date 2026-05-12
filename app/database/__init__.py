@@ -26,6 +26,7 @@ from app.infra.database.repositories.forums import (
     insert_forum,
     get_forum_by_id,
     get_forums_by_game,
+    get_all_forums,
     delete_forum_by_id,
 )
 from app.infra.database.repositories.games import (
@@ -34,6 +35,7 @@ from app.infra.database.repositories.games import (
     get_game_by_id,
     get_all_game,
     update_game_by_id,
+    update_game_fields_by_id,
     delete_game_by_id,
 )
 from app.infra.database.repositories.groups import (
@@ -100,7 +102,7 @@ __all__ = [
     "get_discussions_by_forum", "update_discussion", "delete_discussion",
     "insert_forum", "get_forum_by_id", "get_forums_by_game", "delete_forum_by_id",
     "insert_game", "get_game_by_name", "get_game_by_id", "get_all_game",
-    "update_game_by_id", "delete_game_by_id",
+    "update_game_by_id", "update_game_fields_by_id", "delete_game_by_id",
     "insert_group", "get_group_by_id", "get_all_groups", "get_groups_by_forum",
     "update_group_by_id", "delete_group_by_id",
     "get_guide_by_id", "insert_guide", "delete_guide_by_id", "get_guides_by_forum",
