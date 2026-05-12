@@ -7,7 +7,7 @@ from . import (
     games,
     groups,
     guides,
-    messages_instance,
+    messages,
     tier_list,
     users,
     wiki,
