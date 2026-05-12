@@ -1,4 +1,4 @@
-from .routers import (
+from . import (
     achievements,
     builds,
     chats,
@@ -7,7 +7,7 @@ from .routers import (
     games,
     groups,
     guides,
-    messages_instance,
+    messages,
     tier_list,
     users,
     wiki,
