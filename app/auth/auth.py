@@ -1,4 +1,4 @@
-from app.infra.auth.auth_service import (
+from app.auth.auth_service import (
     Token,
     TokenPair,
     TokenData,

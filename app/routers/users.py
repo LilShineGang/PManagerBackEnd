@@ -12,16 +12,29 @@ bcrypt.hashpw(password="pm".encode("utf-8"), salt=bcrypt.gensalt())
 openssl rand -hex 32
 
 '''
-from app.models import UserIn, UserOut, UserDb, UserBase, TokenOut, UserUpdate
 from pydantic import BaseModel
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
-from fastapi import APIRouter, status, HTTPException, Header, Depends, UploadFile, File, Request
-from dataclasses import dataclass
-from fastapi import APIRouter, status, HTTPException
-from app.shared.images import save_upload
-from app.database import insert_user, get_user_by_username, get_all_users, delete_user_by_username, insert_game, update_user_by_username
+from fastapi import APIRouter, status, HTTPException, Depends, UploadFile, File, Request
 
-from app.auth.auth import create_access_token, create_token_pair, Token, TokenPair, verify_password, decode_token, decode_refresh_token, oauth2_scheme, TokenData, get_hash_password
+from app.auth import (
+    create_token_pair,
+    TokenPair,
+    verify_password,
+    decode_token,
+    decode_refresh_token,
+    oauth2_scheme,
+    TokenData,
+    get_hash_password,
+)
+from app.database import (
+    insert_user,
+    get_user_by_username,
+    get_all_users,
+    delete_user_by_username,
+    update_user_by_username,
+)
+from app.models import UserIn, UserOut, UserDb, UserBase, UserUpdate
+from app.shared.images import save_upload
 
 
 router = APIRouter(

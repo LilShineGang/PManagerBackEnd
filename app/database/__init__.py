@@ -1,4 +1,4 @@
-from app.infra.database.repositories.achievements import (
+from app.repositories.achievements import (
     insert_achievement,
     get_achievement_by_id,
     get_all_achievements,
@@ -6,7 +6,7 @@ from app.infra.database.repositories.achievements import (
     update_achievement_by_id,
     delete_achievement_by_id,
 )
-from app.infra.database.repositories.builds import (
+from app.repositories.builds import (
     insert_build,
     get_build_by_id,
     get_all_builds,
@@ -14,7 +14,7 @@ from app.infra.database.repositories.builds import (
     update_build,
     delete_build,
 )
-from app.infra.database.repositories.discussion import (
+from app.repositories.discussion import (
     insert_discussion,
     get_discussion_by_id,
     get_all_discussions,
@@ -22,14 +22,14 @@ from app.infra.database.repositories.discussion import (
     update_discussion,
     delete_discussion,
 )
-from app.infra.database.repositories.forums import (
+from app.repositories.forums import (
     insert_forum,
     get_forum_by_id,
     get_forums_by_game,
     get_all_forums,
     delete_forum_by_id,
 )
-from app.infra.database.repositories.games import (
+from app.repositories.games import (
     insert_game,
     get_game_by_name,
     get_game_by_id,
@@ -38,7 +38,7 @@ from app.infra.database.repositories.games import (
     update_game_fields_by_id,
     delete_game_by_id,
 )
-from app.infra.database.repositories.groups import (
+from app.repositories.groups import (
     insert_group,
     get_group_by_id,
     get_all_groups,
@@ -46,13 +46,13 @@ from app.infra.database.repositories.groups import (
     update_group_by_id,
     delete_group_by_id,
 )
-from app.infra.database.repositories.guides import (
+from app.repositories.guides import (
     get_guide_by_id,
     insert_guide,
     delete_guide_by_id,
     get_guides_by_forum,
 )
-from app.infra.database.repositories.messages import (
+from app.repositories.messages import (
     insert_message_instance,
     get_message_instance_by_id,
     get_all_messages_instance,
@@ -63,7 +63,7 @@ from app.infra.database.repositories.messages import (
     get_chats_by_message_instance,
     delete_chat,
 )
-from app.infra.database.repositories.tier_list import (
+from app.repositories.tier_list import (
     insert_tier_list,
     get_tier_list_by_id,
     get_all_tier_list,
@@ -71,7 +71,7 @@ from app.infra.database.repositories.tier_list import (
     update_tier_list_by_id,
     delete_tier_list_by_id,
 )
-from app.infra.database.repositories.users import (
+from app.repositories.users import (
     insert_user,
     get_user_by_username,
     get_all_users,
@@ -84,7 +84,7 @@ from app.infra.database.repositories.users import (
     remove_user_achievement,
     get_user_achievements,
 )
-from app.infra.database.repositories.wiki import (
+from app.repositories.wiki import (
     insert_wiki,
     get_wiki_by_id,
     get_all_wiki,
