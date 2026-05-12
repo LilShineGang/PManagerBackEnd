@@ -1,7 +1,8 @@
-from fastapi import APIRouter, status, Depends, HTTPException
+from fastapi import APIRouter, status, Depends, HTTPException, UploadFile, File, Request
 from app.models import GameIn, GameOut
-from app.database import get_all_game, get_user_by_username, insert_game, get_game_by_name
-from app.auth import oauth2_scheme, decode_token, TokenData
+from app.database import get_all_game, get_user_by_username, insert_game, get_game_by_name, get_game_by_id, update_game_fields_by_id
+from app.auth.auth import oauth2_scheme, decode_token, TokenData
+from app.shared.images import save_upload
 
 router = APIRouter(
     prefix="/games",
@@ -122,3 +123,31 @@ async def delete_game(game_id: int, token: str = Depends(oauth2_scheme)):
             detail="Game not found"
         )
     return None
+
+
+@router.post("/{game_id}/image/", response_model=GameOut, status_code=status.HTTP_200_OK)
+async def upload_game_image(
+    game_id: int,
+    request: Request,
+    file: UploadFile = File(...),
+    token: str = Depends(oauth2_scheme),
+):
+    decode_token(token)
+    game = get_game_by_id(game_id)
+    if not game:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+
+    image_url = await save_upload(file, request)
+
+    update_game_fields_by_id(game_id, {"image": image_url})
+    updated = get_game_by_id(game_id)
+    return GameOut(
+        id_game=updated.id_game,
+        name=updated.name,
+        gender=updated.gender,
+        difficulty=updated.difficulty,
+        rating=updated.rating,
+        image=updated.image,
+        category=updated.category,
+    )
+
