@@ -1,6 +1,10 @@
+import re
 import mariadb
 from app.database.config import db_config
 from app.models import GameDb, GameIn
+
+_VALID_COLUMN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_ALLOWED_GAME_COLUMNS = {"name", "gender", "difficulty", "rating", "image", "category"}
 
 
 def insert_game(game: GameIn) -> int | None:
@@ -99,9 +103,12 @@ def update_game_by_id(game_id: int, game_in: GameIn) -> bool:
 def update_game_fields_by_id(game_id: int, fields: dict) -> bool:
     if not fields:
         return False
+    for col in fields:
+        if not _VALID_COLUMN.match(col) or col not in _ALLOWED_GAME_COLUMNS:
+            raise ValueError(f"Invalid column name: {col!r}")
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
-            set_clause = ", ".join(f"{k}=?" for k in fields)
+            set_clause = ", ".join(f"{col}=?" for col in fields)
             values = list(fields.values()) + [game_id]
             cursor.execute(f"UPDATE games SET {set_clause} WHERE id_game=?", values)
             conn.commit()
