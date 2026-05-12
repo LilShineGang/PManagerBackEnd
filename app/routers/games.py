@@ -1,7 +1,15 @@
 from fastapi import APIRouter, status, Depends, HTTPException, UploadFile, File, Request
+
+from app.auth import oauth2_scheme, decode_token, TokenData
+from app.database import (
+    get_all_game,
+    get_user_by_username,
+    insert_game,
+    get_game_by_name,
+    get_game_by_id,
+    update_game_fields_by_id,
+)
 from app.models import GameIn, GameOut
-from app.database import get_all_game, get_user_by_username, insert_game, get_game_by_name, get_game_by_id, update_game_fields_by_id
-from app.auth.auth import oauth2_scheme, decode_token, TokenData
 from app.shared.images import save_upload
 
 router = APIRouter(
@@ -150,4 +158,3 @@ async def upload_game_image(
         image=updated.image,
         category=updated.category,
     )
-
