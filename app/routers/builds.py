@@ -5,6 +5,7 @@ from app.database import (
     get_build_by_id,
     get_all_builds as fetch_all_builds,
     get_builds_by_forum,
+    get_builds_by_game,
     update_build,
     delete_build,
     get_user_by_username,
@@ -45,6 +46,12 @@ async def get_builds_by_forum_endpoint(id_forum: int, token: str = Depends(oauth
     data: TokenData = decode_token(token)
     builds = get_builds_by_forum(id_forum)
     return [BuildOut(id_build=b.id_build, name=b.name, planner=b.planner, category=b.category, description=b.description, id_forum=b.id_forum) for b in builds]
+
+# Obtener builds por juego
+@router.get("/game/{game_id}/", response_model=list[BuildOut])
+async def get_builds_by_game_endpoint(game_id: int, token: str = Depends(oauth2_scheme)):
+    decode_token(token)
+    return get_builds_by_game(game_id) or []
 
 # Actualizar build
 @router.put("/{id_build}/", response_model=BuildOut)

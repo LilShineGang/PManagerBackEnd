@@ -75,6 +75,30 @@ def get_builds_by_forum(forum_id: int) -> list[BuildOut]:
             ]
 
 
+def get_builds_by_game(game_id: int) -> list[BuildOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = (
+                "SELECT b.id_build, b.name, b.planner, b.category, b.description, b.id_forum "
+                "FROM builds b "
+                "JOIN forums f ON b.id_forum = f.id_forum "
+                "WHERE f.id_game = ?"
+            )
+            cursor.execute(sql, (game_id,))
+            rows = cursor.fetchall()
+            return [
+                BuildOut(
+                    id_build=row[0],
+                    name=row[1],
+                    planner=row[2],
+                    category=row[3],
+                    description=row[4],
+                    id_forum=row[5],
+                )
+                for row in rows
+            ]
+
+
 def update_build(build_id: int, build_in: BuildIn) -> bool:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
