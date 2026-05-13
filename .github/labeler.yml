@@ -1,0 +1,21 @@
+backend:
+  - changed-files:
+    - any-glob-to-any-file: "app/**"
+
+docker:
+  - changed-files:
+    - any-glob-to-any-file: "docker-compose.yml"
+    - any-glob-to-any-file: "docker/**"
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file: "requirements.txt"
+
+github:
+  - changed-files:
+    - any-glob-to-any-file: ".github/**"
+
+docs:
+  - changed-files:
+    - any-glob-to-any-file: "*.md"
+    - any-glob-to-any-file: "docs/**"

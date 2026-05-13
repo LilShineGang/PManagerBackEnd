@@ -11,6 +11,7 @@ services:
       - myapi_network
     volumes:
       - ./app:/app/app
+      - ./static:/app/static
     depends_on:
       - myapidb
 
