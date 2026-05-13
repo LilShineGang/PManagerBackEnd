@@ -1,7 +1,6 @@
 from . import (
     achievements,
     builds,
-    chats,
     discussion,
     forums,
     games,
