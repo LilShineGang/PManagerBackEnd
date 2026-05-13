@@ -76,6 +76,29 @@ def update_wiki_by_id(wiki_id: int, wiki_in: WikiIn) -> bool:
             return cursor.rowcount > 0
 
 
+def get_wikis_by_game(game_id: int) -> list[WikiOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = (
+                "SELECT w.id_wiki, w.name, w.category, w.description, w.id_forum "
+                "FROM wiki w "
+                "JOIN forums f ON w.id_forum = f.id_forum "
+                "WHERE f.id_game = ?"
+            )
+            cursor.execute(sql, (game_id,))
+            rows = cursor.fetchall()
+            return [
+                WikiOut(
+                    id_wiki=row[0],
+                    name=row[1],
+                    category=row[2],
+                    description=row[3],
+                    id_forum=row[4],
+                )
+                for row in rows
+            ]
+
+
 def delete_wiki_by_id(wiki_id: int) -> bool:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
