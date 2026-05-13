@@ -1,5 +1,5 @@
 import mariadb
-from app.database.config import db_config
+from app.config.config import db_config
 
 
 def get_guide_by_id(guide_id: int):

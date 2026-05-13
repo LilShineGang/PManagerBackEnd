@@ -1,6 +1,6 @@
 import re
 import mariadb
-from app.database.config import db_config
+from app.config.config import db_config
 from app.models import GameDb, GameIn
 
 _VALID_COLUMN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
