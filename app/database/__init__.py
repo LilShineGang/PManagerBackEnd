@@ -11,6 +11,7 @@ from app.repositories.builds import (
     get_build_by_id,
     get_all_builds,
     get_builds_by_forum,
+    get_builds_by_game,
     update_build,
     delete_build,
 )
@@ -89,6 +90,7 @@ from app.repositories.wiki import (
     get_wiki_by_id,
     get_all_wiki,
     get_wikis_by_forum,
+    get_wikis_by_game,
     update_wiki_by_id,
     delete_wiki_by_id,
 )
@@ -97,7 +99,7 @@ __all__ = [
     "insert_achievement", "get_achievement_by_id", "get_all_achievements",
     "get_achievements_by_game", "update_achievement_by_id", "delete_achievement_by_id",
     "insert_build", "get_build_by_id", "get_all_builds", "get_builds_by_forum",
-    "update_build", "delete_build",
+    "get_builds_by_game", "update_build", "delete_build",
     "insert_discussion", "get_discussion_by_id", "get_all_discussions",
     "get_discussions_by_forum", "update_discussion", "delete_discussion",
     "insert_forum", "get_forum_by_id", "get_forums_by_game", "delete_forum_by_id",
@@ -116,5 +118,5 @@ __all__ = [
     "get_group_members", "add_user_achievement", "remove_user_achievement",
     "get_user_achievements",
     "insert_wiki", "get_wiki_by_id", "get_all_wiki", "get_wikis_by_forum",
-    "update_wiki_by_id", "delete_wiki_by_id",
+    "get_wikis_by_game", "update_wiki_by_id", "delete_wiki_by_id",
 ]
