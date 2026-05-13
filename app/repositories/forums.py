@@ -1,5 +1,5 @@
 import mariadb
-from app.database.config import db_config
+from app.config.config import db_config
 from app.models import ForumIn, ForumOut
 
 
@@ -29,6 +29,15 @@ def get_forums_by_game(game_id: int) -> list[ForumOut]:
         with conn.cursor() as cursor:
             sql = "SELECT id_forum, name, id_game, id_user FROM forums WHERE id_game = ?"
             cursor.execute(sql, (game_id,))
+            rows = cursor.fetchall()
+            return [ForumOut(id_forum=row[0], name=row[1], id_game=row[2], id_user=row[3]) for row in rows]
+
+
+def get_all_forums() -> list[ForumOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "SELECT id_forum, name, id_game, id_user FROM forums"
+            cursor.execute(sql)
             rows = cursor.fetchall()
             return [ForumOut(id_forum=row[0], name=row[1], id_game=row[2], id_user=row[3]) for row in rows]
 

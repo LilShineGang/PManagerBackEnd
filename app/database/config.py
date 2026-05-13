@@ -1,3 +1,3 @@
-from app.infra.database.config import db_config
+from app.config.config import db_config
 
 __all__ = ["db_config"]
