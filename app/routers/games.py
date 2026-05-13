@@ -24,6 +24,13 @@ router = APIRouter(
 async def create_game(game_in: GameIn, token: str = Depends(oauth2_scheme)):
     data: TokenData = decode_token(token)
 
+    user = get_user_by_username(data.username)
+    if not user or user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can create games"
+        )
+
     existing_game = get_game_by_name(game_in.name)
     if existing_game:
         raise HTTPException(
