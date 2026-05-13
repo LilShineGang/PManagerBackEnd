@@ -12,14 +12,29 @@ bcrypt.hashpw(password="pm".encode("utf-8"), salt=bcrypt.gensalt())
 openssl rand -hex 32
 
 '''
-from app.models.models import UserIn, UserOut, UserDb, UserBase, TokenOut, UserUpdate
+from pydantic import BaseModel
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
-from fastapi import APIRouter, status, HTTPException, Header, Depends
-from dataclasses import dataclass
-from fastapi import APIRouter, status, HTTPException
-from app.repositories.users import insert_user, get_user_by_username, get_all_users, delete_user_by_username, insert_game, update_user_by_username
+from fastapi import APIRouter, status, HTTPException, Depends, UploadFile, File, Request
 
-from app.auth.auth import create_access_token, Token, verify_password, decode_token, oauth2_scheme, TokenData, get_hash_password
+from app.auth import (
+    create_token_pair,
+    TokenPair,
+    verify_password,
+    decode_token,
+    decode_refresh_token,
+    oauth2_scheme,
+    TokenData,
+    get_hash_password,
+)
+from app.database import (
+    insert_user,
+    get_user_by_username,
+    get_all_users,
+    delete_user_by_username,
+    update_user_by_username,
+)
+from app.models import UserIn, UserOut, UserDb, UserBase, UserUpdate
+from app.shared.images import save_upload
 
 
 router = APIRouter(
@@ -55,14 +70,10 @@ async def create_user(user_in: UserIn):
     return UserOut(id=user_id, name=user_in.name, username=user_in.username, email=user_in.email, image=user_in.image, role=user_in.role if hasattr(user_in, 'role') else 'user')
 @router.post(
     "/login/",
-    response_model=Token,
+    response_model=TokenPair,
     status_code=status.HTTP_200_OK
-#    "/auth/",
-#    response_model=TokenOut,
-#    status_code=status.HTTP_200_OK
 )
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    # 1. Busco nickname y password en la peticion HTTP
     username: str | None = form_data.username
     password: str | None = form_data.password
 
@@ -72,7 +83,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             detail="Nickname and/or password missing"
         )
 
-    # 2. Buscar el usuario en la base de datos
     user = get_user_by_username(username)
     if not user:
         raise HTTPException(
@@ -80,20 +90,28 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             detail="Username and/or password incorrect"
         )
 
-    # 3. Compruebo contraseñas
     if not verify_password(password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Username and/or password incorrect"
         )
 
-    return create_access_token(
-        UserBase(
-            username=user.username,
-            password=user.password
-        )
-    )
-#    return TokenOut(token=token_str)
+    return create_token_pair(UserBase(username=user.username, password=user.password))
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+@router.post("/refresh/", response_model=TokenPair, status_code=status.HTTP_200_OK)
+async def refresh(request: RefreshRequest):
+    data = decode_refresh_token(request.refresh_token)
+    if not data.username:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    return create_token_pair(UserBase(username=user.username, password=user.password))
 
 # Get all users
 #@router.get(
@@ -275,3 +293,27 @@ Password: alice       name="password"
 username=alice&password=alice
 
 '''
+
+@router.post("/me/image/", response_model=UserOut, status_code=status.HTTP_200_OK)
+async def upload_profile_image(
+    request: Request,
+    file: UploadFile = File(...),
+    token: str = Depends(oauth2_scheme),
+):
+    data: TokenData = decode_token(token)
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    image_url = await save_upload(file, request)
+
+    update_user_by_username(data.username, {"image": image_url})
+    updated_user = get_user_by_username(data.username)
+    return UserOut(
+        id=updated_user.id,
+        name=updated_user.name,
+        username=updated_user.username,
+        email=updated_user.email,
+        image=updated_user.image,
+        role=updated_user.role,
+    )
