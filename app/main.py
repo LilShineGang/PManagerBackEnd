@@ -1,4 +1,6 @@
+import os
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.routers import (
     achievements,
@@ -16,6 +18,10 @@ from app.routers import (
 )
 
 app = FastAPI(debug=True)
+
+STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+os.makedirs(os.path.join(STATIC_DIR, "images"), exist_ok=True)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 app.include_router(users.router)
 app.include_router(games.router)

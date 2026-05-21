@@ -50,14 +50,20 @@ def create_access_token(user: UserBase) -> Token:
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return Token(access_token=encoded_jwt, token_type="bearer")
 
-
 def create_token_pair(user: UserBase) -> TokenPair:
     access_expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MIN)
     refresh_expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    access_token = jwt.encode({"sub": user.username, "exp": access_expire, "type": "access"}, SECRET_KEY, algorithm=ALGORITHM)
-    refresh_token = jwt.encode({"sub": user.username, "exp": refresh_expire, "type": "refresh"}, SECRET_KEY, algorithm=ALGORITHM)
-    return TokenPair(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
+    access_token = jwt.encode(
+        {"sub": user.username, "exp": access_expire, "type": "access"},
+        SECRET_KEY, algorithm=ALGORITHM
+    )
+    refresh_token = jwt.encode(
+        {"sub": user.username, "exp": refresh_expire, "type": "refresh"},
+        SECRET_KEY, algorithm=ALGORITHM
+    )
+    
+    return TokenPair(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
 def decode_token(token: str) -> TokenData:
     try:
