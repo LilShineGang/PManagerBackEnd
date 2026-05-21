@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, Depends, HTTPException
 from app.models import ForumIn, ForumOut
-from app.database import insert_forum, get_forum_by_id, get_forums_by_game, delete_forum_by_id, get_user_by_username, get_game_by_name
+from app.database import insert_forum, get_forum_by_id, get_forums_by_game, delete_forum_by_id, get_user_by_username, get_game_by_name, get_all_forums
 from app.auth import oauth2_scheme, decode_token, TokenData
 
 router = APIRouter(
@@ -20,6 +20,13 @@ async def create_forum(forum_in: ForumIn, token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
     forum_id = insert_forum(forum_in, user.id, game.id_game)
     return ForumOut(id_forum=forum_id, name=forum_in.name, id_game=game.id_game, id_user=user.id)
+
+# Obtener todos los foros
+@router.get("/", response_model=list[ForumOut])
+async def get_all_forums_endpoint(token: str = Depends(oauth2_scheme)):
+    decode_token(token)
+    forums = get_all_forums()
+    return forums
 
 # Obtener todos los foros de un juego
 @router.get("/game/{game_id}/", response_model=list[ForumOut])

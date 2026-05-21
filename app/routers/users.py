@@ -17,7 +17,7 @@ from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from fastapi import APIRouter, status, HTTPException, Header, Depends
 from dataclasses import dataclass
 from fastapi import APIRouter, status, HTTPException
-from app.repositories.users import insert_user, get_user_by_username, get_all_users, delete_user_by_username, insert_game, update_user_by_username
+from app.repositories.users import insert_user, get_user_by_username, get_all_users, delete_user_by_username, update_user_by_username
 
 from app.auth.auth import create_access_token, Token, verify_password, decode_token, oauth2_scheme, TokenData, get_hash_password
 
@@ -62,9 +62,12 @@ async def create_user(user_in: UserIn):
 #    status_code=status.HTTP_200_OK
 )
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    # 1. Busco nickname y password en la peticion HTTP
+    # Busco nickname y password en la peticion HTTP
     username: str | None = form_data.username
     password: str | None = form_data.password
+
+
+
 
     if username is None or password is None:
         raise HTTPException(
@@ -72,7 +75,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             detail="Nickname and/or password missing"
         )
 
-    # 2. Buscar el usuario en la base de datos
+    # Buscar el usuario en la base de datos
     user = get_user_by_username(username)
     if not user:
         raise HTTPException(
@@ -80,12 +83,16 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             detail="Username and/or password incorrect"
         )
 
-    # 3. Compruebo contraseñas
-    if not verify_password(password, user.password):
+    # Compruebo contraseñas
+    verify_ok = verify_password(password, user.password)
+    print(f"[DEBUG login] verify_ok={verify_ok} username={username!r}")
+
+    if not verify_ok:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Username and/or password incorrect"
         )
+
 
     return create_access_token(
         UserBase(
