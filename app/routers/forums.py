@@ -1,4 +1,5 @@
 from fastapi import APIRouter, status, Depends, HTTPException
+from app.models import ForumIn, ForumOut
 
 from app.auth import oauth2_scheme, decode_token, TokenData
 from app.database import (
@@ -34,8 +35,8 @@ async def create_forum(forum_in: ForumIn, token: str = Depends(oauth2_scheme)):
 @router.get("/", response_model=list[ForumOut])
 async def get_all_forums_endpoint(token: str = Depends(oauth2_scheme)):
     decode_token(token)
-    return get_all_forums()
-
+    forums = get_all_forums()
+    return forums
 
 # Obtener todos los foros de un juego
 @router.get("/game/{game_id}/", response_model=list[ForumOut])
