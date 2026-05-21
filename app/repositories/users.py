@@ -128,8 +128,7 @@ class MariaDBUserRepository:
                 cursor.execute(sql, (user_id, group_id))
                 conn.commit()
                 return cursor.rowcount > 0
-
-
+              
 # Mantener las funciones existentes para compatibilidad con el código antiguo
 users: list[UserDb] = [
     UserDb(
