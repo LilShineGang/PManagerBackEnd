@@ -5,6 +5,7 @@ from app.database import (
     get_wiki_by_id,
     get_all_wiki,
     get_wikis_by_forum,
+    get_wikis_by_game,
     update_wiki_by_id,
     delete_wiki_by_id,
     get_forum_by_id,
@@ -59,6 +60,13 @@ async def read_wiki(wiki_id: int, token: str = Depends(oauth2_scheme)):
 async def read_wikis_by_forum(forum_id: int, token: str = Depends(oauth2_scheme)):
     decode_token(token)
     return get_wikis_by_forum(forum_id) or []
+
+
+# Obtener wikis por juego
+@router.get("/game/{game_id}/", response_model=list[WikiOut], status_code=status.HTTP_200_OK)
+async def read_wikis_by_game(game_id: int, token: str = Depends(oauth2_scheme)):
+    decode_token(token)
+    return get_wikis_by_game(game_id) or []
 
 
 # Actualizar wiki
