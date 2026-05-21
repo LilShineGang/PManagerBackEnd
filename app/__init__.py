@@ -1,14 +1,4 @@
-from . import (
-    achievements,
-    builds,
-    chats,
-    discussion,
-    forums,
-    games,
-    groups,
-    guides,
-    messages_instance,
-    tier_list,
-    users,
-    wiki,
-)
+"""Package app."""
+
+# The API entrypoint imports the routers directly from app.main.
+# Do not import router modules here to avoid circular import problems.

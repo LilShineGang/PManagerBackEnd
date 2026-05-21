@@ -5,22 +5,22 @@ from app.auth.auth import get_hash_password
 from typing import Optional, List
 
 
-class MariaDBUserRepository(UserRepository):
+class MariaDBUserRepository:
     def __init__(self):
         self.db_config = db_config
     
     def _get_connection(self):
         return mariadb.connect(**self.db_config)
     
-    def save(self, entity: User) -> User:
+    def save(self, entity: UserDb) -> UserDb:
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
                 sql = "INSERT INTO users (name, username, email, password, image, role) VALUES (?, ?, ?, ?, ?, ?)"
                 values = (
                     entity.name,
                     entity.username,
-                    entity.email.value,
-                    entity.password.value,
+                    entity.email,
+                    entity.password,
                     entity.image,
                     entity.role,
                 )
@@ -29,55 +29,55 @@ class MariaDBUserRepository(UserRepository):
                 entity.id = cursor.lastrowid
                 return entity
     
-    def get_by_id(self, entity_id: int) -> Optional[User]:
+    def get_by_id(self, entity_id: int) -> Optional[UserDb]:
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
                 sql = "SELECT id, name, username, email, password, image, role FROM users WHERE id = ?"
                 cursor.execute(sql, (entity_id,))
                 row = cursor.fetchone()
                 if row:
-                    return User(
+                    return UserDb(
                         id=row[0],
                         name=row[1],
                         username=row[2],
-                        email=Email(row[3]),
-                        password=Password(row[4]),
+                        email=row[3],
+                        password=row[4],
                         image=row[5],
                         role=row[6],
                     )
                 return None
     
-    def get_by_username(self, username: str) -> Optional[User]:
+    def get_by_username(self, username: str) -> Optional[UserDb]:
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
                 sql = "SELECT id, name, username, email, password, image, role FROM users WHERE username = ?"
                 cursor.execute(sql, (username,))
                 row = cursor.fetchone()
                 if row:
-                    return User(
+                    return UserDb(
                         id=row[0],
                         name=row[1],
                         username=row[2],
-                        email=Email(row[3]),
-                        password=Password(row[4]),
+                        email=row[3],
+                        password=row[4],
                         image=row[5],
                         role=row[6],
                     )
                 return None
     
-    def get_all(self) -> List[User]:
+    def get_all(self) -> List[UserDb]:
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
                 sql = "SELECT id, name, username, email, password, image, role FROM users"
                 cursor.execute(sql)
                 rows = cursor.fetchall()
                 return [
-                    User(
+                    UserDb(
                         id=row[0],
                         name=row[1],
                         username=row[2],
-                        email=Email(row[3]),
-                        password=Password(row[4]),
+                        email=row[3],
+                        password=row[4],
                         image=row[5],
                         role=row[6],
                     )
@@ -92,7 +92,7 @@ class MariaDBUserRepository(UserRepository):
                 conn.commit()
                 return cursor.rowcount > 0
     
-    def update(self, entity: User) -> User:
+    def update(self, entity: UserDb) -> UserDb:
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
                 sql = """
@@ -103,8 +103,8 @@ class MariaDBUserRepository(UserRepository):
                 values = (
                     entity.name,
                     entity.username,
-                    entity.email.value,
-                    entity.password.value,
+                    entity.email,
+                    entity.password,
                     entity.image,
                     entity.role,
                     entity.id
