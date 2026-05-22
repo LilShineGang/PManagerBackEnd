@@ -140,3 +140,12 @@ CREATE TABLE IF NOT EXISTS chat (
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_mi) REFERENCES messages_instance(id_mi) ON DELETE CASCADE
 );
+
+-- Game Favorites (user likes)
+CREATE TABLE IF NOT EXISTS game_favorites (
+    user_id  INT NOT NULL,
+    game_id  INT NOT NULL,
+    PRIMARY KEY (user_id, game_id),
+    FOREIGN KEY (user_id) REFERENCES users(id)        ON DELETE CASCADE,
+    FOREIGN KEY (game_id) REFERENCES games(id_game)   ON DELETE CASCADE
+);
