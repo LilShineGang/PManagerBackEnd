@@ -38,6 +38,9 @@ from app.repositories.games import (
     update_game_by_id,
     update_game_fields_by_id,
     delete_game_by_id,
+    add_game_favorite,
+    remove_game_favorite,
+    get_favorite_games_by_user_id,
 )
 from app.repositories.groups import (
     insert_group,
