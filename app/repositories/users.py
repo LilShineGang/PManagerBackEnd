@@ -155,13 +155,14 @@ users: list[UserDb] = [
 def insert_user(user: UserDb) -> int | None:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
-            sql = "insert into users (name, username, email, password, image, role) values (?, ?, ?, ?, ?, ?)"
+            sql = "insert into users (name, username, email, password, image, banner, role) values (?, ?, ?, ?, ?, ?, ?)"
             values = (
                 user.name,
                 user.username,
                 user.email,
                 user.password,
                 user.image,
+                user.banner,
                 user.role,
             )
             cursor.execute(sql, values)
@@ -172,7 +173,7 @@ def insert_user(user: UserDb) -> int | None:
 def get_user_by_username(username: str) -> UserDb | None:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
-            sql = "select id, name, username, email, password, image, role from users where username = ?"
+            sql = "select id, name, username, email, password, image, banner, role from users where username = ?"
             cursor.execute(sql, (username,))
             row = cursor.fetchone()
             if row:
@@ -183,7 +184,8 @@ def get_user_by_username(username: str) -> UserDb | None:
                     email=row[3],
                     password=row[4],
                     image=row[5],
-                    role=row[6],
+                    banner=row[6],
+                    role=row[7],
                 )
             return None
 
@@ -191,7 +193,7 @@ def get_user_by_username(username: str) -> UserDb | None:
 def get_all_users() -> list[UserDb]:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
-            sql = "select id, name, username, email, password, image, role from users"
+            sql = "select id, name, username, email, password, image, banner, role from users"
             cursor.execute(sql)
             rows = cursor.fetchall()
             return [
@@ -202,7 +204,8 @@ def get_all_users() -> list[UserDb]:
                     email=row[3],
                     password=row[4],
                     image=row[5],
-                    role=row[6],
+                    banner=row[6],
+                    role=row[7],
                 )
                 for row in rows
             ]

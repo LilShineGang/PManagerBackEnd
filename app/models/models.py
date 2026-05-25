@@ -24,6 +24,7 @@ class UserIn(UserBase):
     name: str
     email: str
     image: str | None = None
+    banner: str | None = None
     role: str = "user"
 
 
@@ -37,6 +38,7 @@ class UserOut(BaseModel):
     username: str
     email: str
     image: str | None = None
+    banner: str | None = None
     role: str
 
 
@@ -48,6 +50,7 @@ class UserUpdate(BaseModel):
     name: str | None = None
     email: str | None = None
     image: str | None = None
+    banner: str | None = None
     password: str | None = None
 
 

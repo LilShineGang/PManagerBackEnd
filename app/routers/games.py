@@ -8,6 +8,9 @@ from app.database import (
     get_game_by_name,
     get_game_by_id,
     update_game_fields_by_id,
+    add_game_favorite,
+    remove_game_favorite,
+    get_favorite_games_by_user_id,
 )
 from app.models import GameIn, GameOut
 from app.shared.images import save_upload
@@ -98,6 +101,43 @@ async def read_all_games(token: str = Depends(oauth2_scheme)):
         )
         for db_game in all_games
     ]
+
+@router.get("/favorites/", response_model=list[GameOut])
+async def get_favorites(token: str = Depends(oauth2_scheme)):
+    data: TokenData = decode_token(token)
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    games = get_favorite_games_by_user_id(user.id)
+    return [
+        GameOut(
+            id_game=g.id_game, name=g.name, gender=g.gender,
+            difficulty=g.difficulty, rating=g.rating, image=g.image, category=g.category
+        )
+        for g in games
+    ]
+
+
+@router.post("/{game_id}/favorite/", status_code=status.HTTP_204_NO_CONTENT)
+async def add_favorite(game_id: int, token: str = Depends(oauth2_scheme)):
+    data: TokenData = decode_token(token)
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    game = get_game_by_id(game_id)
+    if not game:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+    add_game_favorite(user.id, game_id)
+
+
+@router.delete("/{game_id}/favorite/", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_favorite(game_id: int, token: str = Depends(oauth2_scheme)):
+    data: TokenData = decode_token(token)
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    remove_game_favorite(user.id, game_id)
+
 
 @router.put("/{game_id}/", response_model=GameOut, status_code=status.HTTP_200_OK)
 async def update_game(game_id: int, game_in: GameIn, token: str = Depends(oauth2_scheme)):

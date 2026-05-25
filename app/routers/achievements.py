@@ -44,15 +44,6 @@ async def read_all_achievements(token: str = Depends(oauth2_scheme)):
     return get_all_achievements() or []
 
 
-@router.get("/{achievement_id}/", response_model=AchievementOut, status_code=status.HTTP_200_OK)
-async def read_achievement(achievement_id: int, token: str = Depends(oauth2_scheme)):
-    decode_token(token)
-    achievement = get_achievement_by_id(achievement_id)
-    if not achievement:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Achievement not found")
-    return achievement
-
-
 @router.get(
     "/game/{game_id}/",
     response_model=list[AchievementOut],
@@ -61,6 +52,56 @@ async def read_achievement(achievement_id: int, token: str = Depends(oauth2_sche
 async def read_achievements_by_game(game_id: int, token: str = Depends(oauth2_scheme)):
     decode_token(token)
     return get_achievements_by_game(game_id) or []
+
+
+# ── Rutas /me/ antes de /{achievement_id}/ para evitar conflictos de path ──
+
+@router.get("/me/", response_model=list[AchievementOut], status_code=status.HTTP_200_OK)
+async def read_my_achievements(token: str = Depends(oauth2_scheme)):
+    data: TokenData = decode_token(token)
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    return get_user_achievements(user.id) or []
+
+
+@router.post("/me/{achievement_id}/", status_code=status.HTTP_204_NO_CONTENT)
+async def earn_achievement(achievement_id: int, token: str = Depends(oauth2_scheme)):
+    data: TokenData = decode_token(token)
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+    achievement = get_achievement_by_id(achievement_id)
+    if not achievement:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Achievement not found")
+
+    added = add_user_achievement(user.id, achievement_id)
+    if not added:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Achievement already earned")
+    return None
+
+
+@router.delete("/me/{achievement_id}/", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_achievement(achievement_id: int, token: str = Depends(oauth2_scheme)):
+    data: TokenData = decode_token(token)
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+    removed = remove_user_achievement(user.id, achievement_id)
+    if not removed:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Achievement not found in user")
+    return None
+
+
+@router.get("/{achievement_id}/", response_model=AchievementOut, status_code=status.HTTP_200_OK)
+async def read_achievement(achievement_id: int, token: str = Depends(oauth2_scheme)):
+    decode_token(token)
+    achievement = get_achievement_by_id(achievement_id)
+    if not achievement:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Achievement not found")
+    return achievement
 
 
 @router.put("/{achievement_id}/", response_model=AchievementOut, status_code=status.HTTP_200_OK)
@@ -98,42 +139,3 @@ async def delete_achievement(achievement_id: int, token: str = Depends(oauth2_sc
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Achievement not found")
     return None
-
-
-@router.post("/me/{achievement_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def earn_achievement(achievement_id: int, token: str = Depends(oauth2_scheme)):
-    data: TokenData = decode_token(token)
-    user = get_user_by_username(data.username)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
-    achievement = get_achievement_by_id(achievement_id)
-    if not achievement:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Achievement not found")
-
-    added = add_user_achievement(user.id, achievement_id)
-    if not added:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Achievement already earned")
-    return None
-
-
-@router.delete("/me/{achievement_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def remove_achievement(achievement_id: int, token: str = Depends(oauth2_scheme)):
-    data: TokenData = decode_token(token)
-    user = get_user_by_username(data.username)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
-    removed = remove_user_achievement(user.id, achievement_id)
-    if not removed:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Achievement not found in user")
-    return None
-
-
-@router.get("/me/", response_model=list[AchievementOut], status_code=status.HTTP_200_OK)
-async def read_my_achievements(token: str = Depends(oauth2_scheme)):
-    data: TokenData = decode_token(token)
-    user = get_user_by_username(data.username)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-    return get_user_achievements(user.id) or []

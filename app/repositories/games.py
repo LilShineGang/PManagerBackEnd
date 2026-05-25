@@ -122,3 +122,47 @@ def delete_game_by_id(game_id: int) -> bool:
             cursor.execute(sql, (game_id,))
             conn.commit()
             return cursor.rowcount > 0
+
+
+def add_game_favorite(user_id: int, game_id: int) -> None:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "INSERT IGNORE INTO game_favorites (user_id, game_id) VALUES (?, ?)",
+                (user_id, game_id),
+            )
+            conn.commit()
+
+
+def remove_game_favorite(user_id: int, game_id: int) -> None:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM game_favorites WHERE user_id = ? AND game_id = ?",
+                (user_id, game_id),
+            )
+            conn.commit()
+
+
+def get_favorite_games_by_user_id(user_id: int) -> list[GameDb]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = """
+                SELECT g.id_game, g.name, g.gender, g.difficulty, g.rating, g.image, g.category
+                FROM games g
+                INNER JOIN game_favorites gf ON g.id_game = gf.game_id
+                WHERE gf.user_id = ?
+            """
+            cursor.execute(sql, (user_id,))
+            return [
+                GameDb(
+                    id_game=row[0],
+                    name=row[1],
+                    gender=row[2],
+                    difficulty=row[3],
+                    rating=row[4],
+                    image=row[5],
+                    category=row[6],
+                )
+                for row in cursor.fetchall()
+            ]
