@@ -67,7 +67,7 @@ async def create_user(user_in: UserIn):
             role=user_in.role if hasattr(user_in, 'role') else 'user'
         )
     )
-    return UserOut(id=user_id, name=user_in.name, username=user_in.username, email=user_in.email, image=user_in.image, role=user_in.role if hasattr(user_in, 'role') else 'user')
+    return UserOut(id=user_id, name=user_in.name, username=user_in.username, email=user_in.email, image=user_in.image, banner=user_in.banner, role=user_in.role if hasattr(user_in, 'role') else 'user')
 @router.post(
     "/login/",
     response_model=TokenPair,
@@ -140,7 +140,7 @@ async def get_users(token: str = Depends(oauth2_scheme)):
     # Obtener todos los usuarios de la base de datos
     all_users = get_all_users()
     return [
-        UserOut(id=userDb.id, name=userDb.name, username=userDb.username, email=userDb.email, image=userDb.image, role=userDb.role)
+        UserOut(id=userDb.id, name=userDb.name, username=userDb.username, email=userDb.email, image=userDb.image, banner=userDb.banner, role=userDb.role)
         for userDb in all_users
     ]
 
@@ -159,7 +159,7 @@ async def read_users_me(token: str = Depends(oauth2_scheme)):
             detail="User not found"
         )
         
-    return UserOut(id=user_found.id, name=user_found.name, username=user_found.username, email=user_found.email, image=user_found.image, role=user_found.role)
+    return UserOut(id=user_found.id, name=user_found.name, username=user_found.username, email=user_found.email, image=user_found.image, banner=user_found.banner, role=user_found.role)
 
 
 # Buscar usuario por username
@@ -176,7 +176,7 @@ async def read_user(username: str, token: str = Depends(oauth2_scheme)):
             detail=f"User {username} not found"
         )
     
-    return UserOut(id=user_found.id, name=user_found.name, username=user_found.username, email=user_found.email, image=user_found.image, role=user_found.role)
+    return UserOut(id=user_found.id, name=user_found.name, username=user_found.username, email=user_found.email, image=user_found.image, banner=user_found.banner, role=user_found.role)
 
 
 # Actualizar perfil del usuario autenticado
@@ -194,13 +194,13 @@ async def update_me(user_update: UserUpdate, token: str = Depends(oauth2_scheme)
         fields["email"] = user_update.email
     if user_update.image is not None:
         fields["image"] = user_update.image
+    if user_update.banner is not None:
+        fields["banner"] = user_update.banner
     if user_update.password is not None:
         fields["password"] = get_hash_password(user_update.password)
 
     if fields:
-        updated = update_user_by_username(data.username, fields)
-        if not updated:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User could not be updated")
+        update_user_by_username(data.username, fields)
 
     updated_user = get_user_by_username(data.username)
     return UserOut(
@@ -209,6 +209,7 @@ async def update_me(user_update: UserUpdate, token: str = Depends(oauth2_scheme)
         username=updated_user.username,
         email=updated_user.email,
         image=updated_user.image,
+        banner=updated_user.banner,
         role=updated_user.role,
     )
 
@@ -318,5 +319,32 @@ async def upload_profile_image(
         username=updated_user.username,
         email=updated_user.email,
         image=updated_user.image,
+        banner=updated_user.banner,
+        role=updated_user.role,
+    )
+
+
+@router.post("/me/banner/", response_model=UserOut, status_code=status.HTTP_200_OK)
+async def upload_banner_image(
+    request: Request,
+    file: UploadFile = File(...),
+    token: str = Depends(oauth2_scheme),
+):
+    data: TokenData = decode_token(token)
+    user = get_user_by_username(data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    banner_url = await save_upload(file, request)
+
+    update_user_by_username(data.username, {"banner": banner_url})
+    updated_user = get_user_by_username(data.username)
+    return UserOut(
+        id=updated_user.id,
+        name=updated_user.name,
+        username=updated_user.username,
+        email=updated_user.email,
+        image=updated_user.image,
+        banner=updated_user.banner,
         role=updated_user.role,
     )
