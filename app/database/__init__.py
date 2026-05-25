@@ -12,6 +12,7 @@ from app.repositories.builds import (
     get_all_builds,
     get_builds_by_forum,
     get_builds_by_game,
+    get_builds_by_planner,
     update_build,
     delete_build,
 )
@@ -102,7 +103,7 @@ __all__ = [
     "insert_achievement", "get_achievement_by_id", "get_all_achievements",
     "get_achievements_by_game", "update_achievement_by_id", "delete_achievement_by_id",
     "insert_build", "get_build_by_id", "get_all_builds", "get_builds_by_forum",
-    "get_builds_by_game", "update_build", "delete_build",
+    "get_builds_by_game", "get_builds_by_planner", "update_build", "delete_build",
     "insert_discussion", "get_discussion_by_id", "get_all_discussions",
     "get_discussions_by_forum", "update_discussion", "delete_discussion",
     "insert_forum", "get_forum_by_id", "get_forums_by_game", "delete_forum_by_id",

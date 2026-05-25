@@ -6,6 +6,7 @@ from app.database import (
     get_all_builds as fetch_all_builds,
     get_builds_by_forum,
     get_builds_by_game,
+    get_builds_by_planner,
     update_build,
     delete_build,
     get_user_by_username,
@@ -23,6 +24,13 @@ async def create_build(build_in: BuildIn, token: str = Depends(oauth2_scheme)):
     data: TokenData = decode_token(token)
     build_id = insert_build(build_in)
     return BuildOut(id_build=build_id, name=build_in.name, planner=build_in.planner, category=build_in.category, description=build_in.description, id_forum=build_in.id_forum)
+
+# Obtener builds del usuario autenticado
+@router.get("/me/", response_model=list[BuildOut])
+async def get_my_builds(token: str = Depends(oauth2_scheme)):
+    data: TokenData = decode_token(token)
+    return get_builds_by_planner(data.username) or []
+
 
 # Obtener todos los builds
 @router.get("/", response_model=list[BuildOut])
