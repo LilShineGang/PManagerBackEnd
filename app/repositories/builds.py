@@ -99,6 +99,25 @@ def get_builds_by_game(game_id: int) -> list[BuildOut]:
             ]
 
 
+def get_builds_by_planner(planner: str) -> list[BuildOut]:
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "SELECT id_build, name, planner, category, description, id_forum FROM builds WHERE planner = ?"
+            cursor.execute(sql, (planner,))
+            rows = cursor.fetchall()
+            return [
+                BuildOut(
+                    id_build=row[0],
+                    name=row[1],
+                    planner=row[2],
+                    category=row[3],
+                    description=row[4],
+                    id_forum=row[5],
+                )
+                for row in rows
+            ]
+
+
 def update_build(build_id: int, build_in: BuildIn) -> bool:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
