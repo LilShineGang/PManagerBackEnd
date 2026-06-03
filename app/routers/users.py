@@ -140,7 +140,7 @@ async def get_users(token: str = Depends(oauth2_scheme)):
     # Obtener todos los usuarios de la base de datos
     all_users = get_all_users()
     return [
-        UserOut(id=userDb.id, name=userDb.name, username=userDb.username, email=userDb.email, image=userDb.image, banner=userDb.banner, role=userDb.role)
+        UserOut(id=userDb.id, name=userDb.name, username=userDb.username, email=userDb.email, image=userDb.image, banner=userDb.banner, role=userDb.role, honor=userDb.honor)
         for userDb in all_users
     ]
 
@@ -159,7 +159,7 @@ async def read_users_me(token: str = Depends(oauth2_scheme)):
             detail="User not found"
         )
         
-    return UserOut(id=user_found.id, name=user_found.name, username=user_found.username, email=user_found.email, image=user_found.image, banner=user_found.banner, role=user_found.role)
+    return UserOut(id=user_found.id, name=user_found.name, username=user_found.username, email=user_found.email, image=user_found.image, banner=user_found.banner, role=user_found.role, honor=user_found.honor)
 
 
 # Buscar usuario por username
@@ -176,7 +176,7 @@ async def read_user(username: str, token: str = Depends(oauth2_scheme)):
             detail=f"User {username} not found"
         )
     
-    return UserOut(id=user_found.id, name=user_found.name, username=user_found.username, email=user_found.email, image=user_found.image, banner=user_found.banner, role=user_found.role)
+    return UserOut(id=user_found.id, name=user_found.name, username=user_found.username, email=user_found.email, image=user_found.image, banner=user_found.banner, role=user_found.role, honor=user_found.honor)
 
 
 # Actualizar perfil del usuario autenticado

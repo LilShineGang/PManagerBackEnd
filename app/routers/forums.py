@@ -25,11 +25,13 @@ async def create_forum(forum_in: ForumIn, token: str = Depends(oauth2_scheme)):
     user = get_user_by_username(data.username)
     if not user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    if forum_in.forum_type == "official" and user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can create official forums")
     game = get_game_by_name(forum_in.game_name)
     if not game:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
     forum_id = insert_forum(forum_in, user.id, game.id_game)
-    return ForumOut(id_forum=forum_id, name=forum_in.name, id_game=game.id_game, id_user=user.id)
+    return ForumOut(id_forum=forum_id, name=forum_in.name, id_game=game.id_game, id_user=user.id, forum_type=forum_in.forum_type)
 
 # Obtener todos los foros
 @router.get("/", response_model=list[ForumOut])

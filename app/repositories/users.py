@@ -173,7 +173,7 @@ def insert_user(user: UserDb) -> int | None:
 def get_user_by_username(username: str) -> UserDb | None:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
-            sql = "select id, name, username, email, password, image, banner, role from users where username = ?"
+            sql = "SELECT id, name, username, email, password, image, banner, role, COALESCE(honor,0) FROM users WHERE username = ?"
             cursor.execute(sql, (username,))
             row = cursor.fetchone()
             if row:
@@ -186,6 +186,7 @@ def get_user_by_username(username: str) -> UserDb | None:
                     image=row[5],
                     banner=row[6],
                     role=row[7],
+                    honor=row[8],
                 )
             return None
 
@@ -193,7 +194,7 @@ def get_user_by_username(username: str) -> UserDb | None:
 def get_all_users() -> list[UserDb]:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
-            sql = "select id, name, username, email, password, image, banner, role from users"
+            sql = "SELECT id, name, username, email, password, image, banner, role, COALESCE(honor,0) FROM users"
             cursor.execute(sql)
             rows = cursor.fetchall()
             return [
@@ -206,9 +207,20 @@ def get_all_users() -> list[UserDb]:
                     image=row[5],
                     banner=row[6],
                     role=row[7],
+                    honor=row[8],
                 )
                 for row in rows
             ]
+
+
+def update_user_honor(user_id: int, delta: int) -> bool:
+    """Adjusts honor by delta (positive or negative), never below 0."""
+    with mariadb.connect(**db_config) as conn:
+        with conn.cursor() as cursor:
+            sql = "UPDATE users SET honor = GREATEST(0, COALESCE(honor, 0) + ?) WHERE id = ?"
+            cursor.execute(sql, (delta, user_id))
+            conn.commit()
+            return cursor.rowcount > 0
 
 
 def delete_user_by_username(username: str) -> bool:
