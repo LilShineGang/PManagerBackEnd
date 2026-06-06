@@ -19,6 +19,9 @@ from app.repositories.post_replies import (
     get_replies_by_discussion, update_reply_image, delete_reply,
 )
 from app.repositories.post_votes import upsert_vote, get_my_vote, get_vote_counts
+from app.repositories.reply_votes import (
+    upsert_reply_vote, get_my_reply_vote, get_reply_vote_counts,
+)
 from app.repositories.users import update_user_honor
 from app.auth import oauth2_scheme, decode_token, TokenData
 from app.shared.images import save_upload
@@ -223,3 +226,50 @@ async def delete_reply_endpoint(
     if user.role != "admin" and reply.id_user != user.id:
         raise HTTPException(status_code=403, detail="Not allowed")
     delete_reply(id_reply)
+
+
+# ── Comment votes ────────────────────────────────────────────────────────────
+
+@router.post(
+    "/{id_discussion}/replies/{id_reply}/vote/",
+    response_model=VoteResponse,
+)
+async def vote_comment(
+    id_discussion: int,
+    id_reply: int,
+    vote_in: PostVoteIn,
+    token: str = Depends(oauth2_scheme),
+):
+    user = _require_user(token)
+    if vote_in.vote not in (1, -1):
+        raise HTTPException(status_code=400, detail="vote must be 1 or -1")
+    reply = get_reply_by_id(id_reply)
+    if not reply or reply.id_discussion != id_discussion:
+        raise HTTPException(status_code=404, detail="Reply not found")
+
+    old_vote, new_vote = upsert_reply_vote(id_reply, user.id, vote_in.vote)
+
+    # Honor: only likes affect author's honor
+    if reply.id_user and reply.id_user != user.id:
+        if old_vote != 1 and new_vote == 1:
+            update_user_honor(reply.id_user, +1)
+        elif old_vote == 1 and new_vote != 1:
+            update_user_honor(reply.id_user, -1)
+
+    likes, dislikes = get_reply_vote_counts(id_reply)
+    return VoteResponse(my_vote=new_vote, likes=likes, dislikes=dislikes)
+
+
+@router.get(
+    "/{id_discussion}/replies/{id_reply}/vote/",
+    response_model=VoteResponse,
+)
+async def get_my_comment_vote(
+    id_discussion: int,
+    id_reply: int,
+    token: str = Depends(oauth2_scheme),
+):
+    user = _require_user(token)
+    my = get_my_reply_vote(id_reply, user.id)
+    likes, dislikes = get_reply_vote_counts(id_reply)
+    return VoteResponse(my_vote=my, likes=likes, dislikes=dislikes)

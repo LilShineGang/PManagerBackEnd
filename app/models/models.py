@@ -272,6 +272,8 @@ class PostReplyOut(BaseModel):
     created_at: str | None = None
     id_parent_reply: int | None = None
     parent_author: str | None = None
+    likes: int = 0
+    dislikes: int = 0
 
 
 # --- Vote models ---

@@ -7,11 +7,19 @@ _REPLY_SELECT = """
            u.username,
            DATE_FORMAT(pr.created_at, '%Y-%m-%d %H:%i') AS created_at,
            pr.id_parent_reply,
-           pu.username AS parent_author
+           pu.username AS parent_author,
+           COALESCE(SUM(CASE WHEN rv.vote =  1 THEN 1 ELSE 0 END), 0) AS likes,
+           COALESCE(SUM(CASE WHEN rv.vote = -1 THEN 1 ELSE 0 END), 0) AS dislikes
     FROM post_replies pr
-    LEFT JOIN users u  ON pr.id_user         = u.id
-    LEFT JOIN post_replies pp ON pr.id_parent_reply = pp.id_reply
-    LEFT JOIN users pu ON pp.id_user          = pu.id
+    LEFT JOIN users u         ON pr.id_user         = u.id
+    LEFT JOIN post_replies pp ON pr.id_parent_reply  = pp.id_reply
+    LEFT JOIN users pu        ON pp.id_user          = pu.id
+    LEFT JOIN reply_votes rv  ON pr.id_reply         = rv.id_reply
+"""
+
+_REPLY_GROUP = """
+    GROUP BY pr.id_reply, pr.id_discussion, pr.id_user, pr.content, pr.image,
+             u.username, pr.created_at, pr.id_parent_reply, pu.username
 """
 
 
@@ -26,6 +34,8 @@ def _row_to_reply(row) -> PostReplyOut:
         created_at=row[6],
         id_parent_reply=row[7],
         parent_author=row[8],
+        likes=int(row[9]),
+        dislikes=int(row[10]),
     )
 
 
@@ -43,7 +53,10 @@ def insert_reply(reply_in: PostReplyIn, discussion_id: int, user_id: int) -> int
 def get_reply_by_id(reply_id: int) -> PostReplyOut | None:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
-            cursor.execute(f"{_REPLY_SELECT} WHERE pr.id_reply = ?", (reply_id,))
+            cursor.execute(
+                f"{_REPLY_SELECT} WHERE pr.id_reply = ? {_REPLY_GROUP}",
+                (reply_id,),
+            )
             row = cursor.fetchone()
             return _row_to_reply(row) if row else None
 
@@ -52,7 +65,7 @@ def get_replies_by_discussion(discussion_id: int) -> list[PostReplyOut]:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
             cursor.execute(
-                f"{_REPLY_SELECT} WHERE pr.id_discussion = ? ORDER BY pr.created_at ASC",
+                f"{_REPLY_SELECT} WHERE pr.id_discussion = ? {_REPLY_GROUP} ORDER BY pr.created_at ASC",
                 (discussion_id,),
             )
             return [_row_to_reply(r) for r in cursor.fetchall()]
