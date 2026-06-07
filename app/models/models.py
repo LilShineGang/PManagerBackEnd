@@ -5,6 +5,7 @@ from pydantic import BaseModel
 class ForumIn(BaseModel):
     name: str
     game_name: str
+    forum_type: str = "community"  # "official" | "community"
 
 
 class ForumOut(BaseModel):
@@ -12,6 +13,7 @@ class ForumOut(BaseModel):
     name: str
     id_game: int | None = None
     id_user: int | None = None
+    forum_type: str = "community"
 
 
 # --- User models ---
@@ -30,6 +32,7 @@ class UserIn(UserBase):
 
 class UserDb(UserIn):
     id: int
+    honor: int = 0
 
 
 class UserOut(BaseModel):
@@ -40,6 +43,7 @@ class UserOut(BaseModel):
     image: str | None = None
     banner: str | None = None
     role: str
+    honor: int = 0
 
 
 class TokenOut(BaseModel):
@@ -225,7 +229,8 @@ class GroupOut(BaseModel):
 # --- Discussion models ---
 class DiscussionIn(BaseModel):
     name: str
-    comments: str | None = None
+    comments: str | None = None   # body / content
+    image: str | None = None
     posts: int | None = None
     rating: float | None = None
     id_forum: int | None = None
@@ -239,7 +244,73 @@ class DiscussionOut(BaseModel):
     id_discussion: int
     name: str
     comments: str | None = None
+    image: str | None = None
     posts: int | None = None
     rating: float | None = None
     id_forum: int | None = None
     id_user: int | None = None
+    author_username: str | None = None
+    likes: int = 0
+    dislikes: int = 0
+    reply_count: int = 0
+    created_at: str | None = None
+    author_image: str | None = None
+
+
+# --- Post reply models ---
+class PostReplyIn(BaseModel):
+    content: str
+    id_parent_reply: int | None = None
+
+
+class PostReplyOut(BaseModel):
+    id_reply: int
+    id_discussion: int
+    id_user: int
+    content: str
+    image: str | None = None
+    author_username: str | None = None
+    created_at: str | None = None
+    id_parent_reply: int | None = None
+    parent_author: str | None = None
+    likes: int = 0
+    dislikes: int = 0
+    author_image: str | None = None
+
+
+# --- Vote models ---
+class PostVoteIn(BaseModel):
+    vote: int  # 1 = like, -1 = dislike
+
+
+class VoteResponse(BaseModel):
+    my_vote: int   # 0 = no vote, 1 = like, -1 = dislike
+    likes: int
+    dislikes: int
+
+
+# --- Direct chat models ---
+class StartConversationIn(BaseModel):
+    other_username: str
+
+
+class DirectConversationOut(BaseModel):
+    id_conversation: int
+    other_user_id: int
+    other_username: str
+    other_user_image: str | None = None
+    last_message: str | None = None
+    last_timestamp: str | None = None
+
+
+class DirectMessageIn(BaseModel):
+    content: str
+
+
+class DirectMessageOut(BaseModel):
+    id_message: int
+    id_conversation: int
+    sender_id: int
+    sender_username: str
+    content: str
+    timestamp: str | None = None
