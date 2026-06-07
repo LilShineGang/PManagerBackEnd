@@ -9,7 +9,8 @@ _REPLY_SELECT = """
            pr.id_parent_reply,
            pu.username AS parent_author,
            COALESCE(SUM(CASE WHEN rv.vote =  1 THEN 1 ELSE 0 END), 0) AS likes,
-           COALESCE(SUM(CASE WHEN rv.vote = -1 THEN 1 ELSE 0 END), 0) AS dislikes
+           COALESCE(SUM(CASE WHEN rv.vote = -1 THEN 1 ELSE 0 END), 0) AS dislikes,
+           u.image AS author_image
     FROM post_replies pr
     LEFT JOIN users u         ON pr.id_user         = u.id
     LEFT JOIN post_replies pp ON pr.id_parent_reply  = pp.id_reply
@@ -19,7 +20,7 @@ _REPLY_SELECT = """
 
 _REPLY_GROUP = """
     GROUP BY pr.id_reply, pr.id_discussion, pr.id_user, pr.content, pr.image,
-             u.username, pr.created_at, pr.id_parent_reply, pu.username
+             u.username, u.image, pr.created_at, pr.id_parent_reply, pu.username
 """
 
 
@@ -36,6 +37,7 @@ def _row_to_reply(row) -> PostReplyOut:
         parent_author=row[8],
         likes=int(row[9]),
         dislikes=int(row[10]),
+        author_image=row[11],
     )
 
 
