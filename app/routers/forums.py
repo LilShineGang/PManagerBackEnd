@@ -40,6 +40,13 @@ async def get_all_forums_endpoint(token: str = Depends(oauth2_scheme)):
     forums = get_all_forums()
     return forums
 
+# Obtener todos los foros
+@router.get("/", response_model=list[ForumOut])
+async def get_all_forums_endpoint(token: str = Depends(oauth2_scheme)):
+    decode_token(token)
+    forums = get_all_forums()
+    return forums
+
 # Obtener todos los foros de un juego
 @router.get("/game/{game_id}/", response_model=list[ForumOut])
 async def get_forums(game_id: int, token: str = Depends(oauth2_scheme)):

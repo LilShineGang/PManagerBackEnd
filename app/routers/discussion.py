@@ -17,6 +17,11 @@ from app.repositories.discussion import update_discussion_image
 from app.repositories.post_replies import (
     insert_reply, get_reply_by_id,
     get_replies_by_discussion, update_reply_image, delete_reply,
+from app.auth import oauth2_scheme, decode_token, TokenData
+
+router = APIRouter(
+    prefix="/discussions",
+    tags=["Discussions"]
 )
 from app.repositories.post_votes import upsert_vote, get_my_vote, get_vote_counts
 from app.repositories.reply_votes import (
