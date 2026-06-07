@@ -2,7 +2,7 @@ import mariadb
 from app.config.config import db_config
 from app.models import DiscussionIn, DiscussionOut
 
-# Enriched SELECT: joins users, post_votes and post_replies in one shot.
+# Subqueries avoid the Cartesian product that JOIN post_votes × post_replies would cause.
 _DISCUSSION_SELECT = """
     SELECT
         d.id_discussion,
@@ -14,20 +14,16 @@ _DISCUSSION_SELECT = """
         d.id_forum,
         d.id_user,
         u.username AS author_username,
-        COALESCE(SUM(CASE WHEN pv.vote =  1 THEN 1 ELSE 0 END), 0) AS likes,
-        COALESCE(SUM(CASE WHEN pv.vote = -1 THEN 1 ELSE 0 END), 0) AS dislikes,
-        COALESCE(COUNT(DISTINCT pr.id_reply), 0)                    AS reply_count,
-        DATE_FORMAT(d.created_at, '%Y-%m-%d %H:%i')           AS created_at
+        COALESCE((SELECT COUNT(*) FROM post_votes  WHERE id_discussion = d.id_discussion AND vote =  1), 0) AS likes,
+        COALESCE((SELECT COUNT(*) FROM post_votes  WHERE id_discussion = d.id_discussion AND vote = -1), 0) AS dislikes,
+        COALESCE((SELECT COUNT(*) FROM post_replies WHERE id_discussion = d.id_discussion), 0)              AS reply_count,
+        DATE_FORMAT(d.created_at, '%Y-%m-%d %H:%i') AS created_at,
+        u.image                                      AS author_image
     FROM discussion d
-    LEFT JOIN users        u  ON d.id_user       = u.id
-    LEFT JOIN post_votes   pv ON d.id_discussion = pv.id_discussion
-    LEFT JOIN post_replies pr ON d.id_discussion = pr.id_discussion
+    LEFT JOIN users u ON d.id_user = u.id
 """
 
-_GROUP_BY = """
-    GROUP BY d.id_discussion, d.name, d.comments, d.image, d.posts, d.rating,
-             d.id_forum, d.id_user, u.username, d.created_at
-"""
+_GROUP_BY = ""
 
 
 def _row_to_discussion(row) -> DiscussionOut:
@@ -45,6 +41,7 @@ def _row_to_discussion(row) -> DiscussionOut:
         dislikes=int(row[10]),
         reply_count=int(row[11]),
         created_at=row[12],
+        author_image=row[13],
     )
 
 
@@ -82,7 +79,7 @@ def get_discussion_by_id(discussion_id: int) -> DiscussionOut | None:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
             cursor.execute(
-                f"{_DISCUSSION_SELECT} WHERE d.id_discussion = ? {_GROUP_BY}",
+                f"{_DISCUSSION_SELECT} WHERE d.id_discussion = ?",
                 (discussion_id,),
             )
             row = cursor.fetchone()
@@ -93,7 +90,7 @@ def get_all_discussions() -> list[DiscussionOut]:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
             cursor.execute(
-                f"{_DISCUSSION_SELECT} {_GROUP_BY} ORDER BY d.created_at DESC"
+                f"{_DISCUSSION_SELECT} ORDER BY d.created_at DESC"
             )
             return [_row_to_discussion(r) for r in cursor.fetchall()]
 
@@ -102,7 +99,7 @@ def get_discussions_by_forum(forum_id: int) -> list[DiscussionOut]:
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
             cursor.execute(
-                f"{_DISCUSSION_SELECT} WHERE d.id_forum = ? {_GROUP_BY} ORDER BY d.created_at DESC",
+                f"{_DISCUSSION_SELECT} WHERE d.id_forum = ? ORDER BY d.created_at DESC",
                 (forum_id,),
             )
             return [_row_to_discussion(r) for r in cursor.fetchall()]

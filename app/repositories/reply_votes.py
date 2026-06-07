@@ -3,9 +3,6 @@ from app.config.config import db_config
 
 
 def upsert_reply_vote(reply_id: int, user_id: int, vote: int) -> tuple[int, int]:
-    """Insert / update a vote on a comment reply.  Returns (old_vote, new_vote).
-    Same vote as existing → toggle off (remove).
-    """
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -33,7 +30,6 @@ def upsert_reply_vote(reply_id: int, user_id: int, vote: int) -> tuple[int, int]
 
 
 def get_my_reply_vote(reply_id: int, user_id: int) -> int:
-    """Returns 1 (like), -1 (dislike) or 0 (no vote)."""
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -45,7 +41,6 @@ def get_my_reply_vote(reply_id: int, user_id: int) -> int:
 
 
 def get_reply_vote_counts(reply_id: int) -> tuple[int, int]:
-    """Returns (likes, dislikes)."""
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
             cursor.execute(

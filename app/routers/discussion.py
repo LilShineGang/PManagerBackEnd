@@ -29,8 +29,6 @@ from app.shared.images import save_upload
 router = APIRouter(prefix="/discussions", tags=["Discussions"])
 
 
-# ── helpers ────────────────────────────────────────────────────────────────
-
 def _require_user(token: str):
     data: TokenData = decode_token(token)
     user = get_user_by_username(data.username)
@@ -38,8 +36,6 @@ def _require_user(token: str):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     return user
 
-
-# ── Discussion CRUD ────────────────────────────────────────────────────────
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=DiscussionOut)
 async def create_discussion(
@@ -103,8 +99,6 @@ async def delete_discussion_endpoint(
     delete_discussion(id_discussion)
 
 
-# ── Image upload ────────────────────────────────────────────────────────────
-
 @router.post("/{id_discussion}/image/", response_model=DiscussionOut)
 async def upload_discussion_image(
     id_discussion: int,
@@ -123,8 +117,6 @@ async def upload_discussion_image(
     return get_discussion_by_id(id_discussion)
 
 
-# ── Votes ───────────────────────────────────────────────────────────────────
-
 @router.post("/{id_discussion}/vote/", response_model=VoteResponse)
 async def vote_discussion(
     id_discussion: int,
@@ -141,12 +133,14 @@ async def vote_discussion(
 
     old_vote, new_vote = upsert_vote(id_discussion, user.id, vote_in.vote)
 
-    # Honor: only likes (vote=1) affect honor
     if disc.id_user and disc.id_user != user.id:
-        if old_vote != 1 and new_vote == 1:
-            update_user_honor(disc.id_user, +1)
-        elif old_vote == 1 and new_vote != 1:
-            update_user_honor(disc.id_user, -1)
+        delta = 0
+        if old_vote != 1  and new_vote == 1:  delta += 1
+        if old_vote == 1  and new_vote != 1:  delta -= 1
+        if old_vote != -1 and new_vote == -1: delta -= 1
+        if old_vote == -1 and new_vote != -1: delta += 1
+        if delta != 0:
+            update_user_honor(disc.id_user, delta)
 
     likes, dislikes = get_vote_counts(id_discussion)
     return VoteResponse(my_vote=new_vote, likes=likes, dislikes=dislikes)
@@ -162,8 +156,6 @@ async def get_my_vote_endpoint(
     likes, dislikes = get_vote_counts(id_discussion)
     return VoteResponse(my_vote=my, likes=likes, dislikes=dislikes)
 
-
-# ── Replies ─────────────────────────────────────────────────────────────────
 
 @router.get("/{id_discussion}/replies/", response_model=list[PostReplyOut])
 async def list_replies(id_discussion: int, token: str = Depends(oauth2_scheme)):
@@ -185,6 +177,7 @@ async def create_reply(
     if not get_discussion_by_id(id_discussion):
         raise HTTPException(status_code=404, detail="Discussion not found")
     reply_id = insert_reply(reply_in, id_discussion, user.id)
+    update_user_honor(user.id, +1)
     return get_reply_by_id(reply_id)
 
 
@@ -228,8 +221,6 @@ async def delete_reply_endpoint(
     delete_reply(id_reply)
 
 
-# ── Comment votes ────────────────────────────────────────────────────────────
-
 @router.post(
     "/{id_discussion}/replies/{id_reply}/vote/",
     response_model=VoteResponse,
@@ -249,12 +240,14 @@ async def vote_comment(
 
     old_vote, new_vote = upsert_reply_vote(id_reply, user.id, vote_in.vote)
 
-    # Honor: only likes affect author's honor
     if reply.id_user and reply.id_user != user.id:
-        if old_vote != 1 and new_vote == 1:
-            update_user_honor(reply.id_user, +1)
-        elif old_vote == 1 and new_vote != 1:
-            update_user_honor(reply.id_user, -1)
+        delta = 0
+        if old_vote != 1  and new_vote == 1:  delta += 1
+        if old_vote == 1  and new_vote != 1:  delta -= 1
+        if old_vote != -1 and new_vote == -1: delta -= 1
+        if old_vote == -1 and new_vote != -1: delta += 1
+        if delta != 0:
+            update_user_honor(reply.id_user, delta)
 
     likes, dislikes = get_reply_vote_counts(id_reply)
     return VoteResponse(my_vote=new_vote, likes=likes, dislikes=dislikes)

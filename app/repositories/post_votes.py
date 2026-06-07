@@ -3,9 +3,6 @@ from app.config.config import db_config
 
 
 def upsert_vote(discussion_id: int, user_id: int, vote: int) -> tuple[int, int]:
-    """Insert / update a vote.  Returns (old_vote, new_vote).
-    If the user sends the same vote they already have it acts as a toggle (removes it).
-    """
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -16,7 +13,6 @@ def upsert_vote(discussion_id: int, user_id: int, vote: int) -> tuple[int, int]:
             old_vote: int = row[0] if row else 0
 
             if old_vote == vote:
-                # Same vote → toggle off
                 cursor.execute(
                     "DELETE FROM post_votes WHERE id_discussion = ? AND id_user = ?",
                     (discussion_id, user_id),
@@ -34,7 +30,6 @@ def upsert_vote(discussion_id: int, user_id: int, vote: int) -> tuple[int, int]:
 
 
 def get_my_vote(discussion_id: int, user_id: int) -> int:
-    """Returns 1 (like), -1 (dislike) or 0 (no vote)."""
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -46,7 +41,6 @@ def get_my_vote(discussion_id: int, user_id: int) -> int:
 
 
 def get_vote_counts(discussion_id: int) -> tuple[int, int]:
-    """Returns (likes, dislikes)."""
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
             cursor.execute(

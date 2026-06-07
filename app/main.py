@@ -6,6 +6,7 @@ from app.routers import (
     achievements,
     builds,
     chats,
+    direct_chats,
     discussion,
     forums,
     games,
@@ -33,6 +34,7 @@ app.include_router(tier_list.router)
 app.include_router(groups.router)
 app.include_router(messages_instance.router)
 app.include_router(chats.router)
+app.include_router(direct_chats.router)
 app.include_router(builds.router)
 app.include_router(discussion.router)
 

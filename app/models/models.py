@@ -254,6 +254,7 @@ class DiscussionOut(BaseModel):
     dislikes: int = 0
     reply_count: int = 0
     created_at: str | None = None
+    author_image: str | None = None
 
 
 # --- Post reply models ---
@@ -274,6 +275,7 @@ class PostReplyOut(BaseModel):
     parent_author: str | None = None
     likes: int = 0
     dislikes: int = 0
+    author_image: str | None = None
 
 
 # --- Vote models ---
@@ -285,3 +287,30 @@ class VoteResponse(BaseModel):
     my_vote: int   # 0 = no vote, 1 = like, -1 = dislike
     likes: int
     dislikes: int
+
+
+# --- Direct chat models ---
+class StartConversationIn(BaseModel):
+    other_username: str
+
+
+class DirectConversationOut(BaseModel):
+    id_conversation: int
+    other_user_id: int
+    other_username: str
+    other_user_image: str | None = None
+    last_message: str | None = None
+    last_timestamp: str | None = None
+
+
+class DirectMessageIn(BaseModel):
+    content: str
+
+
+class DirectMessageOut(BaseModel):
+    id_message: int
+    id_conversation: int
+    sender_id: int
+    sender_username: str
+    content: str
+    timestamp: str | None = None

@@ -129,7 +129,6 @@ class MariaDBUserRepository:
                 conn.commit()
                 return cursor.rowcount > 0
               
-# Mantener las funciones existentes para compatibilidad con el código antiguo
 users: list[UserDb] = [
     UserDb(
         id=1,
@@ -214,7 +213,6 @@ def get_all_users() -> list[UserDb]:
 
 
 def update_user_honor(user_id: int, delta: int) -> bool:
-    """Adjusts honor by delta (positive or negative), never below 0."""
     with mariadb.connect(**db_config) as conn:
         with conn.cursor() as cursor:
             sql = "UPDATE users SET honor = GREATEST(0, COALESCE(honor, 0) + ?) WHERE id = ?"
@@ -243,9 +241,6 @@ def update_user_by_username(username: str, fields: dict) -> bool:
             cursor.execute(sql, values)
             conn.commit()
             return cursor.rowcount > 0
-
-
-# --- user_group (membership) ---
 
 
 def add_user_to_group(user_id: int, group_id: int) -> bool:
@@ -289,9 +284,6 @@ def get_group_members(group_id: int) -> list[UserDb]:
                 )
                 for row in rows
             ]
-
-
-# --- user_achievement ---
 
 
 def add_user_achievement(user_id: int, achievement_id: int) -> bool:
